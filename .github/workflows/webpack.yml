@@ -24,6 +24,9 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
+    - name: Install jq
+      run: sudo apt-get install -y jq
+
     - name: Build
       run: |
         yarn install
@@ -31,11 +34,11 @@ jobs:
 
     - name: Get version
       id: version
-      run: echo "version=$(node -p -e 'require(\"./package.json\").version')" >> $GITHUB_ENV
+      run: echo "version=$(jq -r .version package.json)" >> $GITHUB_ENV
 
     - name: Get app name
       id: app_name
-      run: echo "app_name=$(node -p -e 'require(\"./package.json\").name')" >> $GITHUB_ENV
+      run: echo "app_name=$(jq -r .name package.json)" >> $GITHUB_ENV
 
     - name: Create Release
       uses: actions/create-release@v1
