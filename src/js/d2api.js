@@ -66,6 +66,32 @@ export const d2Get = async (endpoint) => {
     }
 };
 
+export const d2Patch = async (endpoint, body) => {
+    try {
+        endpoint = formatEndpoint(endpoint);
+
+        if (!validateUID(endpoint)) {
+            console.warn("Warning: The endpoint does not end with a valid 11-character UID");
+        }
+
+        let headers = getHeaders();
+        headers.set("Content-Type", "application/json-patch+json");
+        let response = await fetch(baseUrl + endpoint, {
+            method: "PATCH",
+            headers: headers,
+            body: JSON.stringify(body)
+        });
+        if (!response.ok) {
+            await handleApiError(response); // Handle the error response
+        }
+        return { status: "success" };
+    } catch (error) {
+        console.log("ERROR in PATCH:");
+        console.log(error);
+        throw error;
+    }
+}
+
 // POST to API async
 export const d2PostJson = async (endpoint, body) => {
     try {

@@ -1,20 +1,37 @@
 <!DOCTYPE html>
 <!--suppress ALL -->
 <html>
-
-<head>
-    <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1">
-</head>
-
 <body>
     <div id="dhis-header-bar"></div>
     <script defer src="resources/dhis-header-bar.js"></script>
-
-    <div id="mainView">
-        <p>Content goes here...</p>
-
-        <button onclick="helloWorld()">Hello</button>
+    <div id="tool-content" style="margin: 20px;">
+    <div id="intro">
+        <h2>Categories which are enabled as data dimensions but not used in any favorites</h2>
+        <p>The table below shows a ranking of categories which are used as dimensions. Categories 
+            can be used in the data visualization tools to aggregate data. They are particularly
+            useful to generate subtotals along a category. For instance, if you have a category combination
+             called "Age/Sex" which consists of two categories, you can easily generate the subtotals for
+            the for the category options in Age (e.g. Male and Female) and Age (&lt;15 and &gt;15).</p>
+        <p>It is worth considering though whether certain categories should be enabled as a data dimension. For each category
+            which is enabled as a data dimension, a column will be created in the analytics tables. This can lead to a large number
+            of columns in the analytics tables which can slow down the analytics generation process. It is therefore recommended to
+            only enable categories as data dimensions which are actually used in the data visualizations or perhaps data set reports.</p>
+        </p>
+        <p>The table below shows the relative usage of category dimensions in viewed favorites over the last 12 months. The overall
+            count is provided, as well as the contribution to the total count of all category dimensions. The second percentage
+            shows how frequently this dimension is used compared to all favorites, regardless of whether they use category dimensions or not.
+        </p>
+        <p>You should carefully consider which of the dimensions are required. Category dimensions are easily reenabled if needed.
+            By disabling categories which are not needed you may be able to reduce the time required to generate analytics tables.
+            The user interface of the visualization tools may also be less cluttered if only the necessary dimensions are enabled.
+        </p>
+    </div>
+    <div id="detailsSection" style="margin: 20px;">
+        <div id="detailsReport"></div>
+    </div>
+    <div>
+        <button id="removeSQLView" onclick="removeSQLView()">Remove Tool SQL View</button>
+    </div>
     </div>
 </body>
-
 </html>

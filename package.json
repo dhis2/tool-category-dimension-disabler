@@ -1,17 +1,22 @@
 {
-  "name": "dhis2_webapp_template",
-  "description": "Template for basic DHIS2 webapps",
+  "name": "tool-category-dimension-disabler",
+  "description": "Tool to help you disable categories which are not used in any favorites",
   "version": "0.1.0",
   "dependencies": {
+    "datatables.net-dt": "^2.1.8"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "eslint-plugin-react": "^7.37.2",
+    "typescript": "^5.7.2",
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.15.0",
     "copy-webpack-plugin": "^12.0.2",
     "css-loader": "^7.1.2",
     "d2-manifest": "^1.0.0",
-    "@eslint/eslintrc": "^3.2.0",
-    "@eslint/js": "^9.15.0",
-    "globals": "^15.12.0",
+    "eslint": "^9.16.0",
     "file-loader": "^6.2.0",
+    "globals": "^15.12.0",
     "html-loader": "^5.1.0",
     "html-webpack-plugin": "^5.6.3",
     "style-loader": "^4.0.0",
@@ -40,7 +45,7 @@
       "48": "img/icons/app_logo_48x48.png",
       "96": "img/icons/app_logo_96x96.png"
     },
-    "name": "DHIS2 Skeleton App for Dummies",
+    "name": "Category dimension disabler",
     "version": "0.1.0",
     "appType": "APP"
   }
