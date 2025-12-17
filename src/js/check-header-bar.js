@@ -6,9 +6,10 @@ function parseServerVersion(versionString) {
     const cleanedVersion = versionString.replace("-SNAPSHOT", "");
     const [majorStr, minorStr, patchStr = "0"] = cleanedVersion.split(".");
     
+
     return {
-        major: parseInt(majorStr, 10),
-        minor: parseInt(minorStr, 10),
+        major: Number.parseInt(majorStr, 10),
+        minor: Number.parseInt(minorStr, 10),
         patch: parseInt(patchStr, 10),
         snapshot
     };
