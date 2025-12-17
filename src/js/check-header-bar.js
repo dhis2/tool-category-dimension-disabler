@@ -10,7 +10,7 @@ function parseServerVersion(versionString) {
     return {
         major: Number.parseInt(majorStr, 10),
         minor: Number.parseInt(minorStr, 10),
-        patch: NumberparseInt(patchStr, 10),
+        patch: Number.parseInt(patchStr, 10),
         snapshot
     };
 }
