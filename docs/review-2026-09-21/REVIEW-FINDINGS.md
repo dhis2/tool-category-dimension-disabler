@@ -6,6 +6,20 @@ Reviewer: agent (Claude Opus 5, `dhis2-app-review` skill)
 DHIS2 versions tested in this pass: **2.40.12** and **2.43.1** (Sierra Leone
 seeds). 2.41, 2.42 and the Laos 2.43 instance follow in later passes.
 
+**Update, review pass B (2026-09-21)**: **2.41.10** (`agent-cdd-emis41`, EMIS
+"edu-meta" seed) tested against the rebuilt bundle containing the M1/M2/L1/L3
+–L6 fixes below. Full results in `docs/review-2026-09-21/UI-TEST-RESULTS.md`.
+M1 is confirmed fixed live (three dimensions disabled in succession, three
+toasts, no alternation). No new app defect was found; one new LOW finding
+(L9) documents a test-suite-only gap discovered while running `e2e/` with
+the `limited-user` flow excluded. Two suite steps fail on this instance for
+reasons that are properties of the EMIS seed, not the app — see
+`UI-TEST-RESULTS.md` "2.41.10-specific notes" for the full explanation:
+the seed defines zero `categoryOptionGroupSets`, and both `admin` and
+`local_admin` hold `ALL` here (unlike the Sierra Leone seeds), so the
+data-read-denied scenario cannot be reproduced on this instance with any
+standard account.
+
 ## Summary
 
 The App Platform rewrite is in good shape. `yarn lint` is clean and all 63
@@ -157,6 +171,31 @@ None.
   though the installed view may still work for them. Fix: add one sentence
   ("Ask an administrator with the 'Add/Update SQL view' authority to update
   it.").
+- **L9 (new, review pass B, 2026-09-21). `e2e/flows.py`'s `restore-view` step
+  assumes a notice box is always present** — test-suite-only, not an app
+  defect. `flow_restore_view` (`e2e/flows.py`) calls
+  `ui.notice_title(frame)`, which waits for `NOTICE_BOX` to become visible,
+  then only acts if its text contains `MISSING_NOTICE`. In the normal full
+  run this works because the preceding `limited-user` step
+  (`_ensure_limited_user` / `flow_limited_user`) always deletes the SQL view
+  before returning, so `restore-view` reliably finds the MISSING notice and
+  recreates the view. When `limited-user` is excluded from `E2E_FLOWS` (as
+  review pass B did on `agent-cdd-emis41`, since that check was already
+  covered on 2.43.1) and the preceding `outdated-update` step already leaves
+  the view installed and `READY`, `restore-view` opens the app straight to
+  the usage table — no notice box ever appears — and `notice_title()` times
+  out, raising an exception that is reported as a suite FAIL. Observed
+  live: `[FAIL] restore-view / flow raised an exception — waiting for
+  locator("[data-test='dhis2-uicore-noticebox']").first to be visible`; the
+  view's actual end state was verified directly via `GET
+  /api/sqlViews/GOLswS44mh8?fields=name,sharing` and was correct throughout.
+  Fix (test suite, not app code): have `flow_restore_view` check whether the
+  table is already rendered before waiting for a notice box, e.g. `if
+  frame.locator(ui.USAGE_TABLE).count() > 0: return PASS` short-circuit, or
+  document in `e2e/README.md` that `limited-user` must run whenever
+  `restore-view` does. Left undone — no source or script under `src/`/
+  `scripts/` is affected, and this is a review deliverable, not the app
+  itself.
 
 ## Claims investigated and rejected
 
