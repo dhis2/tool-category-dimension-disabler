@@ -40,6 +40,20 @@ All notable changes to this project will be documented in this file.
 - An ⓘ tooltip in every numeric column header explaining what it counts.
 - Support for DHIS2 2.40 to 2.43.
 
+### Fixed
+
+- The app now renders `<CssVariables>`. The app-platform shell does not
+  provide the DHIS2 design tokens, so every `var(--spacers-*)` and
+  `var(--colors-*)` declaration in the app's own stylesheets was dropped and
+  the page rendered with no padding, margins or spacing at all.
+- The **Columns** chooser draws a checkbox per entry. `MenuItem`'s `checkbox`
+  prop only sets `role` and `aria-checked`, so the current selection was
+  invisible behind the open dropdown.
+- Numeric column headers are right-aligned above their numbers.
+  `DataTableColumnHeader` applies its `align` prop as `text-align` only, which
+  cannot move the label inside its flex row, so the header sat 89px to the
+  left of the figures it named.
+
 ## [0.1.0]
 
 ### Added

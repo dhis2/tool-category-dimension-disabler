@@ -55,9 +55,14 @@ SHARING_COLUMNS = {
     "privateFavorites": "private",
 }
 FAVORITE_COLUMNS = {"favorites": "favorites", **SHARING_COLUMNS}
+# One chooser entry per column defined in src/components/columns.ts.
+COLUMN_COUNT = 10
 CHOOSER_COLUMN = "privateFavorites"
 CHOOSER_COLUMN_LABEL = "Private"
 CROSSCHECK_ROW_LIMIT = 3
+# A right-aligned header may end no further from its column's right edge
+# than the cell's own inline padding (12px), plus a px for rounding.
+MAX_HEADER_OFFSET_PX = 13
 
 LIMITED_ROLE_NAME = "cdd-e2e-app-only"
 LIMITED_USERNAME = "cdde2elimited"
@@ -93,8 +98,16 @@ def _frame(ctx):
 
 
 def _table_frame(ctx):
-    """The app frame with the usage table rendered (creates the view if missing)."""
+    """The app frame with the usage table rendered (creates the view if missing).
+
+    Right after a load the status query is still in flight and neither the
+    table nor a notice exists yet, so wait for whichever the app settles on
+    before deciding that the view has to be created.
+    """
     frame = _frame(ctx)
+    frame.locator(f"{ui.USAGE_TABLE}, {ui.NOTICE_BOX}").first.wait_for(
+        state="visible", timeout=ui.DEFAULT_TIMEOUT_MS
+    )
     if frame.locator(ui.USAGE_TABLE).count() == 0:
         ui.click_button(frame, ui.CREATE_BUTTON)
     ui.wait_for_table(frame)
@@ -324,6 +337,55 @@ def flow_columns_chooser(ctx):
             frame, f"Unticking '{CHOOSER_COLUMN_LABEL}' removes the column", False
         )
     )
+    return results
+
+
+def _design_tokens_step(frame):
+    tokens = ui.design_tokens(frame)
+    missing = [name for name, value in tokens.items() if not value]
+    return (
+        "The DHIS2 design tokens the stylesheets use resolve",
+        PASS if not missing else FAIL,
+        f"undefined: {missing}" if missing else f"resolved: {tokens}",
+    )
+
+
+def _header_alignment_step(frame):
+    offsets = ui.numeric_header_offsets(frame)
+    strayed = {
+        key: offset
+        for key, offset in offsets.items()
+        if offset > MAX_HEADER_OFFSET_PX
+    }
+    return (
+        "Numeric column headers sit above their numbers",
+        PASS if offsets and not strayed else FAIL,
+        f"px from the right edge: {offsets}",
+    )
+
+
+def _chooser_checkbox_step(frame):
+    shown = set(ui.visible_column_keys(frame))
+    ui.open_column_chooser(frame)
+    boxes = ui.column_checkboxes(frame)
+    ui.close_column_chooser(frame)
+    ticked = {key for key, checked in boxes.items() if checked}
+    return (
+        "Every chooser entry draws a checkbox matching the table",
+        PASS if len(boxes) == COLUMN_COUNT and ticked == shown else FAIL,
+        f"ticked: {sorted(ticked)}, shown: {sorted(shown)}",
+    )
+
+
+def flow_layout(ctx):
+    """The table is spaced, aligned and ticked the way the design calls for."""
+    frame = _table_frame(ctx)
+    results = [
+        _design_tokens_step(frame),
+        _header_alignment_step(frame),
+        _chooser_checkbox_step(frame),
+    ]
+    _shot(ctx, "13-layout")
     return results
 
 
@@ -807,6 +869,7 @@ FLOWS = [
     ("load-missing", flow_load_missing),
     ("create-view", flow_create_view),
     ("columns-chooser", flow_columns_chooser),
+    ("layout", flow_layout),
     ("filter-sort", flow_filter_and_sort),
     ("disable-per-type", flow_disable_one_per_type),
     ("re-enable", flow_reenable),

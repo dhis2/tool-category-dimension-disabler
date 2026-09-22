@@ -33,6 +33,15 @@ in the last 12 months and lets an admin disable them.
   `renderWithProvider` from `src/test-utils`. `data-test` is the test id
   attribute.
 - Never call `i18n.t` at module scope.
+- `src/App.tsx` must render `<CssVariables>` for every token section the
+  stylesheets use: the app-platform shell provides none, so an unlisted
+  section silently drops every declaration referencing it (`src/cssVariables.test.ts`
+  guards this, and the e2e `layout` flow checks it in a browser).
+- Two `@dhis2/ui` components look like they do more than they do:
+  `MenuItem checkbox` only sets `role`/`aria-checked` and draws nothing (pass
+  a visual through its `icon` slot), and `DataTableColumnHeader align` only
+  sets `text-align`, which cannot move the label inside the header's flex row
+  (`UsageTable.module.css` reverses that row for numeric columns).
 - The SQL view text must not contain a protected table name such as `users`
   (also `userinfo`, `oauth2client`): DHIS2 scans the query text with a
   word-boundary match and returns `409 E4310` from

@@ -28,6 +28,13 @@ USAGE_HEADER = f"[data-test^='{USAGE_HEADER_PREFIX}']"
 COLUMN_CHOOSER = "[data-test='column-chooser']"
 COLUMN_CHOOSER_MENU = "[data-test='column-chooser-menu']"
 COLUMN_CHOOSER_ITEM = "[data-test='column-chooser-{key}'] [role='menuitemcheckbox']"
+COLUMN_CHECK_PREFIX = "column-check-"
+COLUMN_CHECK = f"[data-test^='{COLUMN_CHECK_PREFIX}']"
+# The label span the app puts in each column header, next to the sort icon.
+HEADER_LABEL = "[class*='_label_']"
+# One design token per section the stylesheets use. They resolve only when
+# the app renders <CssVariables>, which the app-platform shell does not.
+DESIGN_TOKENS = ("--spacers-dp16", "--colors-grey700")
 LAYER_BACKDROP = "[data-test='dhis2-uicore-layer'] .backdrop"
 DISABLE_DIALOG = "[data-test='disable-dialog']"
 REMOVE_DIALOG = "[data-test='remove-view-dialog']"
@@ -228,6 +235,66 @@ def set_columns(frame, keys, shown):
         if column_checked(frame, key) != shown:
             menu.locator(COLUMN_CHOOSER_ITEM.format(key=key)).first.click()
     close_column_chooser(frame)
+
+
+def column_checkboxes(frame):
+    """Each column's tick state as the open chooser draws it, keyed by column."""
+    boxes = frame.locator(COLUMN_CHOOSER_MENU).first.locator(COLUMN_CHECK)
+    return {
+        (boxes.nth(index).get_attribute("data-test") or "").removeprefix(
+            COLUMN_CHECK_PREFIX
+        ): boxes.nth(index).get_attribute("data-checked") == "true"
+        for index in range(boxes.count())
+    }
+
+
+def design_tokens(frame):
+    """What the browser resolves DESIGN_TOKENS to, empty string when undefined."""
+    return frame.evaluate(
+        """(names) => {
+            const styles = getComputedStyle(document.documentElement)
+            return Object.fromEntries(
+                names.map((name) => [name, styles.getPropertyValue(name).trim()])
+            )
+        }""",
+        list(DESIGN_TOKENS),
+    )
+
+
+def numeric_header_offsets(frame):
+    """Px from each right-aligned column's header label to its cells' right edge.
+
+    A right-aligned column whose header sits on the left reads as belonging to
+    the column beside it, so this should stay within the cell's own padding.
+    """
+    return frame.evaluate(
+        """({ headerPrefix, labelSelector }) => {
+            const offsets = {}
+            for (const header of document.querySelectorAll(
+                `[data-test^="${headerPrefix}"]`
+            )) {
+                const key = header
+                    .getAttribute('data-test')
+                    .slice(headerPrefix.length)
+                const cell = document.querySelector(
+                    `[data-test="usage-cell-${key}"]`
+                )
+                const label = header.querySelector(labelSelector)
+                if (!cell || !label) {
+                    continue
+                }
+                if (getComputedStyle(cell).textAlign !== 'right') {
+                    continue
+                }
+                offsets[key] = Math.round(
+                    cell.getBoundingClientRect().right -
+                        label.getBoundingClientRect().right
+                )
+            }
+            return offsets
+        }""",
+        {"headerPrefix": USAGE_HEADER_PREFIX, "labelSelector": HEADER_LABEL},
+    )
 
 
 def count_label(frame):
