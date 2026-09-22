@@ -10,8 +10,6 @@ build
 .vscode
 .DS_Store
 
-# Agent scratch
-.superpowers
 
 # E2E suite
 e2e/__pycache__/
