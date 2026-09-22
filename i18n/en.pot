@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-09-21T16:01:39.830Z\n"
-"PO-Revision-Date: 2026-09-21T16:01:39.830Z\n"
+"POT-Creation-Date: 2026-09-21T16:09:38.204Z\n"
+"PO-Revision-Date: 2026-09-21T16:09:38.205Z\n"
 
 msgid "Data Dimension Disabler"
 msgstr "Data Dimension Disabler"
@@ -162,6 +162,9 @@ msgstr "% of favorite views"
 
 msgid "1 enabled dimension"
 msgstr "1 enabled dimension"
+
+msgid "{{n}} enabled dimensions"
+msgstr "{{n}} enabled dimensions"
 
 msgid "Sort by {{column}}"
 msgstr "Sort by {{column}}"

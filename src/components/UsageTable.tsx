@@ -88,8 +88,8 @@ export const UsageTable = ({ rows, onDisable }: Props) => {
     const countLabel =
         visibleRows.length === 1
             ? i18n.t('1 enabled dimension')
-            : i18n.t('{{count}} enabled dimensions', {
-                  count: visibleRows.length,
+            : i18n.t('{{n}} enabled dimensions', {
+                  n: visibleRows.length,
               })
 
     return (
