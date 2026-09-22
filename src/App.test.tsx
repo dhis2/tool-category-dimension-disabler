@@ -78,5 +78,6 @@ describe('App', () => {
         expect(
             await screen.findByText('SQL view needs an update')
         ).toBeInTheDocument()
+        expect(screen.getByText('About this tool')).toBeInTheDocument()
     })
 })

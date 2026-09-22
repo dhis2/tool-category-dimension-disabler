@@ -1,14 +1,9 @@
 .container {
-    max-width: 1200px;
+    max-width: none;
     margin: 0 auto;
     padding: var(--spacers-dp16);
     font-size: 14px;
     color: var(--colors-grey900);
-}
-
-.container h1 {
-    font-size: 20px;
-    margin: 0 0 var(--spacers-dp16) 0;
 }
 
 .loader {

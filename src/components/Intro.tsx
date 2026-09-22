@@ -7,17 +7,12 @@ export const Intro = () => (
         <summary>{i18n.t('About this tool')}</summary>
         <p>
             {i18n.t(
-                'Categories, organisation unit group sets, data element group sets and category option group sets can be enabled as data dimensions. Enabled dimensions appear in the analytics apps, where they can be used to disaggregate data. Each enabled dimension adds a column to the analytics tables, which costs time during analytics generation and disk space.'
+                'Every category and group set enabled as a data dimension adds a column to the analytics tables. This table ranks the enabled dimensions by how many favorites use them and how often those favorites were opened in the last 12 months, so rarely used dimensions can be disabled. Hover the column headers for definitions.'
             )}
         </p>
         <p>
             {i18n.t(
-                'The table ranks every enabled dimension by how often favorites (visualizations, maps, event visualizations) that use it were opened in the last 12 months. "% of dimension views" is the share of all such views; "% of favorite views" compares against all favorite views, including favorites that use no dimension.'
-            )}
-        </p>
-        <p>
-            {i18n.t(
-                'Dimensions with no or very few views are candidates for disabling. Favorites that use a disabled dimension stop working, and section forms lose their subtotals for it, so check before disabling. A dimension can be re-enabled at any time in the Maintenance app. Try changes on a test system first.'
+                'Favorites that use a disabled dimension stop working and section forms lose their subtotals, so check before disabling. A dimension can be re-enabled at any time in the Maintenance app.'
             )}
         </p>
     </details>
