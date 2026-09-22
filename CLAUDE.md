@@ -36,4 +36,4 @@ in the last 12 months and lets an admin disable them.
 - `yarn start --proxy <url>`; `scripts/generate-view-events.sh <url>` seeds
   view events so the ranking is non-trivial.
 - Full multi-version review recipe: `dhis2-app-review` skill; last run
-  recorded in `docs/reviews/`.
+  recorded in `docs/review-2026-09-21/`. Reusable e2e suite: `e2e/README.md`.

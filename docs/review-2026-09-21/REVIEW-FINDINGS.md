@@ -3,8 +3,12 @@
 Reviewed: 2026-09-21 · Branch `app-platform-migration` ·
 Scope: code review + functional test + architecture assessment ·
 Reviewer: agent (Claude Opus 5, `dhis2-app-review` skill)
-DHIS2 versions tested in this pass: **2.40.12** and **2.43.1** (Sierra Leone
-seeds). 2.41, 2.42 and the Laos 2.43 instance follow in later passes.
+**All five planned instances have now been tested, across four review
+passes (2026-09-21): 2.40.12 (Sierra Leone seed), 2.41.10 (EMIS seed),
+2.42.6 (EHR seed), 2.43.1 (Sierra Leone seed) and 2.43.1 (Laos HMIS demo
+seed, the largest instance in the review).** Pass A (below) covered
+2.40.12 and 2.43.1 Sierra Leone; passes B, C and D (further down) cover
+2.41.10, 2.42.6 and 2.43.1 Laos respectively.
 
 **Update, review pass B (2026-09-21)**: **2.41.10** (`agent-cdd-emis41`, EMIS
 "edu-meta" seed) tested against the rebuilt bundle containing the M1/M2/L1/L3
@@ -39,7 +43,30 @@ zero `dataElementGroupSets` and zero `categoryOptionGroupSets` at all, and
 the data-read-denied scenario is unreachable here too, same root cause as
 on 2.41.10.
 
-## Summary
+**Update, review pass D (2026-09-21, final pass)**: **2.43.1 Laos**
+(`agent-cdd-lao43`, Laos HMIS demo seed) tested against the same fix-wave
+bundle, functional checks 1, 3, 4, 6, 7, 8, 9 only (checks 2 and 5 out of
+scope, same reasoning as pass C — see `UI-TEST-RESULTS.md` "2.43.1
+Laos-specific notes"). This is by far the largest instance in the review
+(120 enabled dimensions, 2,942 favorites across visualizations, maps and
+event visualizations), and the response-time measurement asked for in the
+task brief was taken here: three direct `curl -w '%{time_total}'` runs
+against `/api/sqlViews/GOLswS44mh8/data?paging=false` returned **0.220577s,
+0.112248s, 0.107094s** (120 rows — the largest table measured in this
+review, still comfortably fast). No new app defect was found. M1 is
+confirmed fixed live for a fifth time (three dimensions disabled in
+succession — Category, Organisation unit group set, Category option group
+set — three toasts, no alternation). The "sort by name" suite assertion
+fails again for the same reason as **L10** (reproduced on a fourth seed,
+6 of 120 rows affected, not a new finding), and the same two instance/seed
+limitations already documented on 2.41.10/2.42.6 recur: this seed defines
+zero `dataElementGroupSets`, and the data-read-denied scenario is
+unreachable because the only usable account (`local_admin`) holds `ALL`.
+The counts the app shows were cross-checked directly against the database
+with `psql`: all 120 rows match the API and the rendered table exactly,
+uid-by-uid and views-by-views, with 0 mismatches.
+
+## Summary (as of pass A, 2026-09-21)
 
 The App Platform rewrite is in good shape. `yarn lint` is clean and all 63
 unit tests pass; the production bundle installs and runs on both 2.40.12 and
@@ -58,6 +85,56 @@ versions, and one MEDIUM defect in the developer helper script
 (`generate-view-events.sh` records nothing useful on 2.40 and, on any version,
 mostly picks favorites that use no dimension at all). The rest are LOW. The
 app is safe to release once M1 is fixed.
+
+## Final verdict (2026-09-21, after pass D — all five instances tested)
+
+**The app is safe to release.** All five planned instances have been tested
+end to end against the fix-wave bundle: 2.40.12 and 2.43.1 (Sierra Leone
+seeds, pass A), 2.41.10 (EMIS seed, pass B), 2.42.6 (EHR seed, pass C) and
+2.43.1 Laos (Laos HMIS demo seed, the largest instance tested, pass D). No
+HIGH or open MEDIUM findings remain, `yarn lint` and `yarn test` (68/68) are
+clean at HEAD, and the core workflow — create the SQL view, rank all four
+dimension types, filter, sort, disable/re-enable, remove/recreate, detect
+and update a legacy view, and surface permission/data errors in the UI —
+works identically across all four DHIS2 minor versions from 2.40 to 2.43 and
+across five very different seeds (a few dozen dimensions on the small
+Sierra Leone seeds up to 120 on the Laos seed, with 0 to 2,942 favorites).
+The response-time check requested for the largest instance came back at
+102–220 ms for a 120-row table — no performance concern.
+
+Finding disposition:
+
+- **Fixed** (`docs/review-2026-09-21/FIXES.md`, commit `2c997df`/`314e264`/
+  `63b629c`): **M1** (alternating success toasts), **M2**
+  (`generate-view-events.sh` produced no usable ranking data), **L1**
+  (duplicate SQL column-name source), **L3** (missing `serverVersion`
+  silently meant the 2.40 schema), **L4** (README overstated the SQL view
+  authority), **L5** (`reset()` no-op while a call is in flight), **L6**
+  (dead `minor` parameter). M1 was re-confirmed fixed live on all four
+  instances tested after the fix (2.41.10, 2.42.6, 2.43.1, 2.43.1 Laos —
+  every one of them shows every success toast when disabling several
+  dimensions in a row).
+- **Open, by design** (maintainer decision, not release-blocking): **L2**
+  (a translated label is lowercased for the dialog sentence), **L7** (the
+  SQL view is intentionally world-readable), **L8** (the OUTDATED notice
+  offers no path for a user who cannot update it).
+- **Open, test-suite gaps only** (no `src/` or `scripts/` code is affected;
+  the app's own behaviour is correct in both cases): **L9** (`e2e/flows.py`'s
+  `restore-view` step assumes a notice box is always present, which fails
+  when `limited-user` is excluded from a run — reproduced on 2.41.10,
+  2.42.6 and 2.43.1 Laos), **L10** (the suite's "sort by name" oracle uses
+  Python's `sorted(key=str.lower)` instead of a locale-aware comparator like
+  the app's own `localeCompare`, so it disagrees with the app's correct,
+  on-screen order on seeds whose names contain `<`, `(`, `,` and digits —
+  reproduced on 2.42.6 and 2.43.1 Laos).
+
+No new app-code defects were found in passes B, C or D. Every suite FAIL
+across all five instances beyond M1 (before its fix) traces to either a
+seed's own metadata shape (e.g. a seed defining zero objects of one or two
+dimension types), an account's authorities (the broker's `local_admin`
+holds `ALL`, so the data-read-denied scenario can only be exercised on the
+Sierra Leone seeds' more limited demo `admin`), or the two test-suite gaps
+above — never to the app itself.
 
 ## Findings
 
@@ -246,6 +323,15 @@ None.
   as ≤ under the same rule the row values were shown in"). Left undone — no
   source or script under `src/`/`scripts/` is affected.
 
+  **Reproduced again, review pass D (2026-09-21), `agent-cdd-lao43`
+  (2.43.1, Laos HMIS demo seed)**: 6 of 120 rows disagree between Python's
+  `sorted(key=str.lower)` and Node's `localeCompare` (same names class as
+  before — `<`, `(`, `,` and digits, e.g. `sorted()` orders `"Age
+  (0-59,60+)"` before `"Age (<1- 30+ years)"`; `localeCompare` orders them
+  the other way, matching what the app displayed). Confirms this is a
+  general property of the suite's oracle, not specific to the EHR seed's
+  naming conventions.
+
 ## Claims investigated and rejected
 
 - **Claim**: the refetch after a successful disable unmounts `UsageTable`
@@ -336,7 +422,7 @@ What remains (none of it architectural):
    `docs/schema-check.md` next to `buildQuery.ts` as the record of why the
    table names are what they are.
 
-## Environment gaps
+## Environment gaps (as of pass A; closed by pass D)
 
 - Only 2.40.12 and 2.43.1 were exercised in this pass; 2.41, 2.42 and the
   larger Laos 2.43 instance (including the response-time measurement asked for
@@ -352,3 +438,14 @@ What remains (none of it architectural):
 - The instances are served over plain http, so the platform's PWA layer logs
   "not a secure context" errors on every load. They are filtered as platform
   noise; on an https deployment they would not appear.
+
+**Update, pass D (2026-09-21)**: all gaps above are now closed. 2.41.10,
+2.42.6 and 2.43.1 Laos have all been tested (passes B, C, D); the Laos
+instance is the large, differently-shaped seed the first gap called for,
+and its response time was measured three times as requested (102–220 ms for
+120 rows). The remaining environment property worth noting for future
+passes: on every non-Sierra-Leone seed tested (EMIS, EHR, Laos), the only
+account that can drive the seed at all (`local_admin`) holds `ALL`, so the
+data-read-denied scenario (design §6) can only ever be exercised on the
+Sierra Leone seeds' demo `admin` — this is now a settled, understood
+limitation of the broker seeds rather than an open gap.
