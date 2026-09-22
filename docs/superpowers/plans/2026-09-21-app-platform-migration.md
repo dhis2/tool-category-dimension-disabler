@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Supported servers: DHIS2 2.40, 2.41, 2.42, 2.43. `minDHIS2Version: '2.40'` in `d2.config.js`.
-- SQL view UID is `GOLswS44mh8`, name `Data dimension usage`, type `QUERY`, `cacheStrategy: NO_CACHE`, sharing `public: 'r-------'`.
+- SQL view UID is `GOLswS44mh8`, name `Data dimension usage`, type `QUERY`, `cacheStrategy: NO_CACHE`, sharing `public: 'r-r-----'`.
 - Package manager is **yarn 1** (`yarn`, `yarn.lock`), not pnpm or npm. The CI workflows already use `yarn install --frozen-lockfile --ignore-scripts`.
 - Code style is the `@dhis2/config-prettier` default: 4-space indent, no semicolons, single quotes, trailing commas. `yarn lint` (eslint + prettier check) must pass before every commit.
 - Every user-facing string goes through `i18n.t()` from `@dhis2/d2-i18n`. Never call `i18n.t` at module scope (the locale is not loaded yet); call it inside functions/components.
@@ -1025,7 +1025,7 @@ describe('sqlView', () => {
             name: SQL_VIEW_NAME,
             type: 'QUERY',
             cacheStrategy: 'NO_CACHE',
-            sharing: { public: 'r-------' },
+            sharing: { public: 'r-r-----' },
         })
         expect(definition.sqlQuery).toBe(buildQuery(43))
         expect(definition.description).toContain('Data Dimension Disabler')
@@ -1083,7 +1083,7 @@ export const buildSqlViewDefinition = (minor: number): SqlViewDefinition => ({
         'Installed by the Data Dimension Disabler app. Ranks categories and group sets that are enabled as data dimensions by favorite views in the last 12 months. Safe to delete; the app recreates it on demand.',
     type: 'QUERY',
     cacheStrategy: 'NO_CACHE',
-    sharing: { public: 'r-------' },
+    sharing: { public: 'r-r-----' },
     sqlQuery: buildQuery(minor),
 })
 
@@ -3363,7 +3363,7 @@ Expected: HTTP 2xx for each; the app appears at `/api/apps` with key `data-dimen
 Invoke `dhis2-app-review` and follow its recipe end to end: static code review of the branch, architecture assessment, functional/UI testing with Playwright on all five installed instances, multi-version compatibility, severity-ranked report. Give it these app-specific checks in addition to its own list, for **each** instance:
 
 1. Fresh load with no view: notice → Create → table with rows of all four types, `views` matching the counts generated in Task 14 (compare with `scripts/generate-view-events.sh` output and with the SQL run directly).
-2. On emis41: the OUTDATED notice appears first; Update → table; the view's `name` is now "Data dimension usage" and `sharing.public` is `r-------` (`GET /api/sqlViews/GOLswS44mh8?fields=name,sharing`).
+2. On emis41: the OUTDATED notice appears first; Update → table; the view's `name` is now "Data dimension usage" and `sharing.public` is `r-r-----` (`GET /api/sqlViews/GOLswS44mh8?fields=name,sharing`).
 3. Filter to each type; sort by name and by views both directions.
 4. Disable one object of each type: dialog text names object and type; after confirm the row disappears, an alert appears, and `GET /api/<resource>/<id>?fields=dataDimension` returns `false`. Re-enable afterwards with a PATCH so the instance stays usable.
 5. Error path, on `agent-cdd-sl43` with the view removed first: create a user that can open the app but cannot create SQL views, log in as that user, load the app, click Create → the notice shows the server message and names the "Add/Update SQL view" authority; the app does not crash. Recipe:

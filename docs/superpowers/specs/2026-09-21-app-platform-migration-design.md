@@ -99,7 +99,7 @@ becomes a version branch in `buildQuery.js`, not in the components.
 - **UID**: `GOLswS44mh8` (unchanged so existing installs are upgraded in place).
 - **Name**: `Data dimension usage`.
 - **Type**: `QUERY`, `cacheStrategy: NO_CACHE`.
-- **Sharing**: `public: "r-------"` (was `rwrw----`).
+- **Sharing**: `public: "r-r-----"` (metadata read + data read; was `rwrw----`). Data read is required for `/api/sqlViews/{uid}/data`, which on 2.43 answers 409 E4312 without it, even for the creating admin.
 - **Columns**: `type`, `uid`, `name`, `views`, `percent`, `percent_of_views`.
 
 Query shape (per type, generated from the map, then `UNION ALL`ed):
