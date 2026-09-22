@@ -7,9 +7,13 @@ Suite: `e2e/run_suite.py` (Python Playwright, Chromium 153)
 
 Every row below is one step of that suite. The suite asserts against the Web
 API as well as the DOM, so "PASS" means the screen and the server agree.
-Columns for 2.42 and the Laos 2.43 instance are left for the later passes of
-this review; 2.41.10 was completed in review pass B (2026-09-21), against the
-EMIS ("edu-meta") seed.
+The Laos 2.43 column is left for the final pass of this review; 2.41.10 was
+completed in review pass B (2026-09-21) against the EMIS ("edu-meta") seed,
+and 2.42.6 was completed in review pass C (2026-09-21) against the EHR
+("ehr-meta") seed. Only functional checks 1, 3, 4, 6, 7, 8 and 9 were run on
+2.42.6 — checks 2 (outdated-view detection) and 5 (limited-user permission
+error) do not apply to this instance (check 2 was covered on 2.41.10, check 5
+on 2.43.1, per the review plan); see "2.42.6-specific notes" below.
 
 ## Instances
 
@@ -17,7 +21,7 @@ EMIS ("edu-meta") seed.
 |---|---|---|---|
 | 2.40.12 | `http://dhis2-agent-cdd-sl40:8080` | 2.40.12 (rev 82b6022) | broker, seed `dhis2-db-sierra-leone_V40.sql.gz` |
 | 2.41.10 | `http://dhis2-agent-cdd-emis41:8080` | 2.41.10 (rev 1a3484f) | broker, seed `dhis2-edu-meta_2026-07-17_v41.sql.gz` (EMIS, "edu-meta") |
-| 2.42 | – | – | later pass (`agent-cdd-ehr42`, ehr-meta seed) |
+| 2.42.6 | `http://dhis2-agent-cdd-ehr42:8080` | 2.42.6 (rev dd8bdbb) | broker, seed `dhis2-ehr-meta_2026-07-17_v42.sql.gz` (EHR, "ehr-meta") |
 | 2.43.1 | `http://dhis2-agent-cdd-sl43:8080` | 2.43.1 (rev 9cbfbf3) | broker, seed `dhis2-db-sierra-leone_v43.sql.gz` |
 | 2.43 Laos | – | – | later pass (`agent-cdd-lao43`, lao_hmis_demo v43) |
 
@@ -41,70 +45,84 @@ data limitations of the seed, not app defects — recorded per-row below.
 
 ## Results
 
-| Step | 2.40.12 | 2.41.10 | 2.42 | 2.43.1 | 2.43 Laos | Notes |
+| Step | 2.40.12 | 2.41.10 | 2.42.6 | 2.43.1 | 2.43 Laos | Notes |
 |---|---|---|---|---|---|---|
-| Fresh load shows the "SQL view not installed" notice | PASS | PASS | | PASS | | screenshots `*-01-missing-notice.png` |
-| Exactly one header bar renders | PASS | PASS | | PASS | | 2.40/2.41 top level; 2.43 inside the global-shell iframe, the app's own header hidden by the shell — no double header |
-| Create SQL view yields the usage table | PASS | PASS | | PASS | | `*-02-table.png` |
-| Created view has the expected name and `r-r-----` sharing | PASS | PASS | | PASS | | `name='Data dimension usage'` |
-| `/sqlViews/{id}/data` responds | PASS (23 rows) | PASS (70 rows) | | PASS (23 rows) | | |
-| Response time of `/sqlViews/{id}/data` | 106 ms | 98 ms | | 116 ms | | INFO; 95–133 ms across runs on 2.40/2.43. Measure again on the Laos instance |
-| Table row count matches the payload | PASS (23/23) | PASS (70/70) | | PASS (23/23) | | `paging=false` is sent and honoured |
-| Row count label matches the rows shown | PASS | PASS | | PASS | | "23 enabled dimensions" on 2.40/2.43; "70 enabled dimensions" on 2.41 |
-| Every row shows the view count the server returned | PASS | PASS | | PASS | | |
-| All four dimension types appear | PASS | **FAIL** | | PASS | | 2.41: only 3 types shown (Category, Org unit group set, Data element group set) — **not an app bug**: the EMIS seed defines **zero** `categoryOptionGroupSets` at all (`GET /api/categoryOptionGroupSets` → `pager.total: 0`), so that type can never have a row here. Filter dropdown still offers it (next row) and correctly shows 0 rows |
-| Filter "Category" | PASS (12) | PASS (62) | | PASS (12) | | |
-| Filter "Organisation unit group set" | PASS (4) | PASS (7) | | PASS (4) | | |
-| Filter "Data element group set" | PASS (5) | PASS (1) | | PASS (5) | | |
-| Filter "Category option group set" | PASS (2) | PASS (0) | | PASS (2) | | `*-03-filter.png`; 2.41: 0 rows shown, 0 expected — correct, the seed has none of this type |
-| Sort by name, ascending / descending | PASS | PASS | | PASS | | `*-04-sorted.png` |
-| Sort by views, ascending / descending | PASS | PASS | | PASS | | 2.40 top: 15/8/7; 2.41 top: 13/11/9; 2.43 top: 30/20/7 |
-| Disable dialog names the object and its type (all four types) | PASS | PASS (3 of 4) | | PASS | | `*-06-disable-dialog.png`; 2.41: Category option group set **SKIPPED** (no enabled object of that type exists to disable) |
-| Row disappears after confirming (all four types) | PASS | PASS (3 of 4) | | PASS | | `*-05-after-disable.png`; 2.41: same skip as above |
-| Server reports `dataDimension=false` (all four types) | PASS | PASS (3 of 4) | | PASS | | verified per type via `GET /api/<resource>/<uid>?fields=dataDimension`; 2.41: same skip as above |
-| Success alert names the disabled object | **FAIL (2 of 4)** | **PASS (3 of 3 disabled)** | | **FAIL (2 of 4)** | | finding **M1**, fixed in `2c997df`. 2.41 disabled Category, Org unit group set, and Data element group set in succession (Category option group set skipped, none exist) — **all three toasts appeared**, confirming the fix live on this instance |
-| Re-enable each disabled dimension (cleanup) | PASS | PASS | | PASS | | JSON Patch `value: true`, verified by read-back |
-| Remove SQL view returns to the create notice | PASS | PASS | | PASS | | view really deleted (`404`), `*-07-removed.png` |
-| Creating the view again restores the table | PASS | PASS | | PASS | | |
-| Data-read error (409 E4312) shows the server message | PASS | **FAIL** | | PASS | | `*-11-data-error.png`. **Not an app bug — instance limitation**: on this EMIS seed, `admin` (and the broker's `local_admin`) both hold the `Superuser` role with `ALL`, and `admin` is also the SQL view's owner; DHIS2 grants owners/superusers full access regardless of `sharing.public`, so setting `public: r-------` has no effect when driven as either account and `/data` keeps answering 200. Unlike the Sierra Leone seeds' limited demo `admin`, no standard account on this instance can be denied data read. Confirmed by `GET /api/me` as both `admin` and `local_admin`: both report `authorities: ["ALL"]` |
-| "Remove SQL view" stays available in the error state | PASS | N/A | | PASS | | not reached — the error state above never occurs on this instance |
-| Retry loads the table once access is restored | PASS | N/A | | PASS | | not reached, same reason |
-| Legacy category-only view detected as outdated | PASS | PASS | | PASS | | `*-08-outdated-notice.png`. 2.41 verified with **two** legacy definitions: the suite's synthetic one (`legacy_sql_view.py`) during the automated run, and separately, by hand, the actual historical `sql_view_41` object from `git show 7b8c7e1:src/app.js` (Task 14 step 4) — screenshots `2.41-08-outdated-notice-legacy-appjs.png` / `2.41-09-after-update-legacy-appjs.png` |
-| Update renames the view in place (same UID) | PASS | PASS | | PASS | | `Category dimension usage` → `Data dimension usage`, UID `GOLswS44mh8` kept |
-| Update sets public sharing to `r-r-----` | PASS | PASS | | PASS | | PUT does change sharing on all versions tested (was `rwrw----`) |
-| User without the SQL view authority: server message shown | PASS | SKIPPED | | PASS | | check 5 skipped on this instance per review plan — already verified on 2.43.1 |
-| …and the "Add/Update SQL view" authority is named | PASS | SKIPPED | | PASS | | `*-10-limited-user.png` |
-| …and the app does not crash | PASS | SKIPPED | | PASS | | no page errors |
-| SQL view left installed at the end | PASS | PASS | | PASS | | 2.41: the suite's own `restore-view` step raised an exception (see notes below the table) but the view's actual state was verified directly via `GET /api/sqlViews/GOLswS44mh8?fields=name,sharing` → installed, correct name and `r-r-----` sharing |
-| No unexpected console errors | PASS | PASS | | PASS | | |
-| No React duplicate-key warnings | PASS | PASS | | PASS | | |
-| No unexpected HTTP error responses | PASS | PASS | | PASS | | |
+| Fresh load shows the "SQL view not installed" notice | PASS | PASS | PASS | PASS | | screenshots `*-01-missing-notice.png` |
+| Exactly one header bar renders | PASS | PASS | PASS | PASS | | 2.40/2.41 top level; 2.42/2.43 inside the global-shell iframe, the app's own header hidden by the shell — no double header. **2.42 is the first version this review confirms live**: `in_global_shell(page)` reports `len(page.frames) > 1` and `header_bar_count` counts exactly 1 visible `<header>` across all frames |
+| Create SQL view yields the usage table | PASS | PASS | PASS | PASS | | `*-02-table.png` |
+| Created view has the expected name and `r-r-----` sharing | PASS | PASS | PASS | PASS | | `name='Data dimension usage'` |
+| `/sqlViews/{id}/data` responds | PASS (23 rows) | PASS (70 rows) | PASS (118 rows) | PASS (23 rows) | | |
+| Response time of `/sqlViews/{id}/data` | 106 ms | 98 ms | 132 ms | 116 ms | | INFO; 95–133 ms across runs on 2.40/2.43, 132 ms on 2.42 (118 rows, the largest table so far). Measure again on the Laos instance |
+| Table row count matches the payload | PASS (23/23) | PASS (70/70) | PASS (118/118) | PASS (23/23) | | `paging=false` is sent and honoured |
+| Row count label matches the rows shown | PASS | PASS | PASS | PASS | | "23 enabled dimensions" on 2.40/2.43; "70 enabled dimensions" on 2.41; "118 enabled dimensions" on 2.42 |
+| Every row shows the view count the server returned | PASS | PASS | PASS | PASS | | |
+| All four dimension types appear | PASS | **FAIL** | **FAIL** | PASS | | 2.41: only 3 types shown (Category, Org unit group set, Data element group set) — **not an app bug**: the EMIS seed defines **zero** `categoryOptionGroupSets` at all (`GET /api/categoryOptionGroupSets` → `pager.total: 0`), so that type can never have a row here. Filter dropdown still offers it (next row) and correctly shows 0 rows. 2.42: only **2** types shown (Category, Org unit group set) — the EHR seed defines **zero** `dataElementGroupSets` **and** zero `categoryOptionGroupSets` at all (`pager.total: 0` for both) |
+| Filter "Category" | PASS (12) | PASS (62) | PASS (110) | PASS (12) | | |
+| Filter "Organisation unit group set" | PASS (4) | PASS (7) | PASS (8) | PASS (4) | | |
+| Filter "Data element group set" | PASS (5) | PASS (1) | PASS (0) | PASS (5) | | |
+| Filter "Category option group set" | PASS (2) | PASS (0) | PASS (0) | PASS (2) | | `*-03-filter.png`; 2.41/2.42: 0 rows shown, 0 expected — correct, neither seed has any object of this type |
+| Sort by name, ascending / descending | PASS | PASS | **FAIL** | PASS | | `*-04-sorted.png`. 2.42: finding **L10** — the on-screen order is correct `localeCompare` order; the suite's Python `sorted(key=str.lower)` oracle disagrees on 14/118 rows whose names contain `<`, `(`, `,` and digits (e.g. `"Age(<1 Yr, 50+Yrs)"` vs `"Age(0-4Yrs,25-49Yrs,50+Yrs)"`), confirmed by reproducing the same comparison in Node (same engine Chromium uses) |
+| Sort by views, ascending / descending | PASS | PASS | PASS | PASS | | 2.40 top: 15/8/7; 2.41 top: 13/11/9; 2.42 top: 15/12/6; 2.43 top: 30/20/7 |
+| Disable dialog names the object and its type (all four types) | PASS | PASS (3 of 4) | PASS (2 of 2) | PASS | | `*-06-disable-dialog.png`; 2.41: Category option group set **SKIPPED** (no enabled object of that type exists to disable); 2.42: Data element group set and Category option group set **SKIPPED** (neither type has any object at all on this seed) |
+| Row disappears after confirming (all four types) | PASS | PASS (3 of 4) | PASS (2 of 2) | PASS | | `*-05-after-disable.png`; 2.41/2.42: same skips as above |
+| Server reports `dataDimension=false` (all four types) | PASS | PASS (3 of 4) | PASS (2 of 2) | PASS | | verified per type via `GET /api/<resource>/<uid>?fields=dataDimension`; 2.41/2.42: same skips as above |
+| Success alert names the disabled object | **FAIL (2 of 4)** | **PASS (3 of 3 disabled)** | **PASS (2 of 2 disabled)** | **FAIL (2 of 4)** | | finding **M1**, fixed in `2c997df`. 2.41 disabled Category, Org unit group set, and Data element group set in succession (Category option group set skipped, none exist) — **all three toasts appeared**, confirming the fix live on this instance. 2.42 disabled Category (ADR Management) then Organisation unit group set (Facility Level) — **both toasts appeared**, re-confirming the fix |
+| Re-enable each disabled dimension (cleanup) | PASS | PASS | PASS | PASS | | JSON Patch `value: true`, verified by read-back |
+| Remove SQL view returns to the create notice | PASS | PASS | PASS | PASS | | view really deleted (`404`), `*-07-removed.png` |
+| Creating the view again restores the table | PASS | PASS | PASS | PASS | | |
+| Data-read error (409 E4312) shows the server message | PASS | **FAIL** | **FAIL** | PASS | | `*-11-data-error.png` (2.42 screenshot instead shows the table — the error state is never reached). **Not an app bug — instance limitation**: on this EMIS seed, `admin` (and the broker's `local_admin`) both hold the `Superuser` role with `ALL`, and `admin` is also the SQL view's owner; DHIS2 grants owners/superusers full access regardless of `sharing.public`, so setting `public: r-------` has no effect when driven as either account and `/data` keeps answering 200. Unlike the Sierra Leone seeds' limited demo `admin`, no standard account on this instance can be denied data read. Confirmed by `GET /api/me` as both `admin` and `local_admin`: both report `authorities: ["ALL"]`. 2.42: same root cause — `admin` rejects Basic auth outright on this seed (401), and the only usable account, `local_admin`, also holds `ALL`. Because the flow raised an exception before its own cleanup step, it left the view's sharing at `r-------`; restored to `r-r-----` by hand and verified (see STATE-CHANGES.md) |
+| "Remove SQL view" stays available in the error state | PASS | N/A | N/A | PASS | | not reached — the error state above never occurs on this instance |
+| Retry loads the table once access is restored | PASS | N/A | N/A | PASS | | not reached, same reason |
+| Legacy category-only view detected as outdated | PASS | PASS | N/A | PASS | | `*-08-outdated-notice.png`. 2.41 verified with **two** legacy definitions: the suite's synthetic one (`legacy_sql_view.py`) during the automated run, and separately, by hand, the actual historical `sql_view_41` object from `git show 7b8c7e1:src/app.js` (Task 14 step 4) — screenshots `2.41-08-outdated-notice-legacy-appjs.png` / `2.41-09-after-update-legacy-appjs.png`. 2.42: check 2 not run per review plan (already covered on 2.41.10 and, in pass A, on 2.43.1) |
+| Update renames the view in place (same UID) | PASS | PASS | N/A | PASS | | `Category dimension usage` → `Data dimension usage`, UID `GOLswS44mh8` kept |
+| Update sets public sharing to `r-r-----` | PASS | PASS | N/A | PASS | | PUT does change sharing on all versions tested (was `rwrw----`) |
+| User without the SQL view authority: server message shown | PASS | SKIPPED | SKIPPED | PASS | | check 5 skipped on 2.41 and 2.42 per review plan — already verified on 2.43.1 |
+| …and the "Add/Update SQL view" authority is named | PASS | SKIPPED | SKIPPED | PASS | | `*-10-limited-user.png` |
+| …and the app does not crash | PASS | SKIPPED | SKIPPED | PASS | | no page errors |
+| SQL view left installed at the end | PASS | PASS | PASS | PASS | | 2.41/2.42: the suite's own `restore-view` step raised an exception (finding **L9**; see notes below the table) but the view's actual state was verified directly via `GET /api/sqlViews/GOLswS44mh8?fields=name,sharing` → installed, correct name and `r-r-----` sharing on both |
+| No unexpected console errors | PASS | PASS | PASS | PASS | | |
+| No React duplicate-key warnings | PASS | PASS | PASS | PASS | | |
+| No unexpected HTTP error responses | PASS | PASS | PASS | PASS | | |
 
 Totals per instance: **46 PASS / 2 FAIL / 2 INFO** on 2.40.12 and on 2.43.1
 (pass A, before the M1/M2 fixes). **2.41.10 (pass B, after the fixes, 36
 doc rows): 28 PASS / 2 FAIL / 3 SKIPPED / 2 N/A / 1 INFO** — see
 "2.41.10-specific notes" below; both FAILs are instance/seed limitations, not
 app defects, and the step that failed under pass A (M1) now passes (3 of 3
-toasts shown, disabling three dimension types in succession).
+toasts shown, disabling three dimension types in succession). **2.42.6
+(pass C, same fix-wave bundle, 36 doc rows, checks 2 and 5 out of scope):
+24 PASS / 3 FAIL / 5 N/A / 3 SKIPPED / 1 INFO** — see "2.42.6-specific
+notes" below; all three FAILs are instance/seed limitations, not app
+defects, and M1 is confirmed fixed again live (2 of 2 toasts shown,
+disabling two dimension types in succession — this seed only has enabled
+objects of two of the four types). Raw suite tallies (finer-grained than the
+doc rows, and including the steps a flow-level exception short-circuits) are
+`{'PASS': 27, 'INFO': 1, 'FAIL': 5, 'SKIP': 2}` for 2.42.6, in
+`e2e/results/results-2.42.6.json` (gitignored, not committed).
 
 ## Version-specific failures
 
-None in the app itself across 2.40.12, 2.41.10 and 2.43.1. Every difference
-observed is in the platform or the seed data:
+None in the app itself across 2.40.12, 2.41.10, 2.42.6 and 2.43.1. Every
+difference observed is in the platform or the seed data:
 
 - **App hosting**: 2.40/2.41 serve `/api/apps/…/index.html` at top level;
-  2.43 redirects to `/apps/data-dimension-disabler` and wraps the app in the
-  global-shell iframe. The app renders its own `@dhis2/header-bar` in all
-  cases; on 2.43 the shell hides it (`display: none`), so exactly one header
-  bar is visible everywhere.
-- **SQL**: the view installed on 2.40 uses `dataelementcategory`, 2.41/2.43
-  use `category`, as the version branch intends. All execute.
+  from **2.42** the instance wraps the app in the global-shell iframe (2.43
+  does the same). The app renders its own `@dhis2/header-bar` in all cases;
+  from 2.42 the shell hides it (`display: none`), so exactly one header bar
+  is visible everywhere. **2.42.6 is the first instance in this review where
+  the global shell is confirmed live** (it was previously verified only on
+  2.43.1, one version past the boundary) — `page.frames` reports more than
+  one frame and exactly one `<header>` is visible across all of them, same
+  mechanism and same result as 2.43.1.
+- **SQL**: the view installed on 2.40 uses `dataelementcategory`, 2.41/2.42/
+  2.43 use `category`, as the version branch intends. All execute.
 - **Writes**: JSON Patch `dataDimension` and `PUT /api/sqlViews/{id}` behave
   identically on both sides of the 2.42 boundary.
 
 M1 (pass A finding, fixed in `2c997df`) reproduced identically on 2.40.12 and
 2.43.1 and is confirmed fixed live on 2.41.10 (three disables in a row, three
-toasts).
+toasts) and again on 2.42.6 (two disables in a row, two toasts — this seed
+only has enabled objects of two of the four types).
 
 ## 2.41.10-specific notes (review pass B)
 
@@ -145,6 +163,60 @@ DHIS2 version:
    directly via the API (installed, correct name, `r-r-----` sharing) and is
    fine.
 
+## 2.42.6-specific notes (review pass C)
+
+Checks 2 (outdated-view detection) and 5 (limited-user permission error)
+were out of scope for this instance per the review plan (check 2 was
+exercised on 2.41.10, check 5 on 2.43.1) — Task 14 step 4 (installing the
+legacy view) was correspondingly not run on `agent-cdd-ehr42`, and the
+`outdated-update` and `limited-user` suite flows were excluded via
+`E2E_FLOWS`. All corresponding doc rows are N/A/SKIPPED, not FAIL. Four
+things differ from the "all versions behave the same" pattern above, three
+of them properties of the **EHR ("ehr-meta") seed**:
+
+1. **Neither `dataElementGroupSets` nor `categoryOptionGroupSets` exist on
+   this seed at all** (`GET /api/dataElementGroupSets` and
+   `GET /api/categoryOptionGroupSets` both → `pager.total: 0`). Unlike
+   2.41.10 (which was missing only category option group sets), this seed
+   has enabled objects of only **two** of the four types (110/111 categories,
+   8/8 organisation unit group sets). "All four dimension types appear"
+   fails by construction, both empty-type filters correctly show 0 rows, and
+   the disable/re-enable/toast checks only exercise Category and
+   Organisation unit group set (2 of 2, not 2 of 4).
+2. **The data-read-error scenario is unreachable here too, for a related but
+   distinct reason.** This seed's `admin` account rejects Basic auth
+   outright (`401`) — it cannot be used at all, unlike the EMIS seed's
+   `admin`. The only usable account, the broker's `local_admin`, holds `ALL`
+   (`GET /api/me` → `authorities: ["ALL"]`), so — same mechanism as
+   2.41.10 — setting the view's sharing to `r-------` has no effect and
+   `/sqlViews/{id}/data` keeps answering 200. Because `flow_data_error`
+   raises its "waiting for the error notice" exception *before* its own
+   `_set_view_sharing(ctx.client, READABLE_SHARING)` restore call, the view
+   was left with `sharing.public = r-------` when the suite finished. This
+   was caught and fixed by hand: `PUT /api/sharing?type=sqlView&id=…` with
+   `publicAccess: "r-r-----"` → `200 "Access control set"`, verified by
+   `GET /api/sqlViews/GOLswS44mh8?fields=sharing` afterwards. On 2.41.10
+   this didn't need a manual fix because the (there, in-scope) `outdated-
+   update` flow ran immediately afterwards and starts by deleting and
+   recreating the view unconditionally, incidentally clearing the bad
+   sharing; excluding that flow here removed that safety net.
+3. Same `restore-view` artifact as 2.41.10 (finding **L9**): with
+   `limited-user` excluded, the view is already `READY` when `restore-view`
+   opens the app, so it never finds a notice box and raises an exception.
+   The view's real end state (installed, correct name, `r-r-----` sharing)
+   was verified directly via the API and is fine.
+4. **New finding, this instance only: the "sort by name" doc rows FAIL, but
+   the app is correct** (finding **L10**, `docs/review-2026-09-21/
+   REVIEW-FINDINGS.md`). The suite's Python oracle (`sorted(names,
+   key=str.lower)`) is not locale-aware, unlike the app's own
+   `a.localeCompare(b, undefined, { sensitivity: 'base' })`. The EHR seed's
+   category names — heavy on `<`, `(`, `,` and embedded digits — are the
+   first in this review to make the two orderings disagree (14 of 118
+   rows). Spot-checked directly in Node (the same V8/ICU engine Chromium
+   uses): `"Age(<1 Yr, 50+Yrs)".localeCompare("Age(0-4Yrs,25-49Yrs,50+Yrs)",
+   undefined, {sensitivity: "base"})` returns `-1` — exactly the order the
+   app displayed and the suite marked wrong.
+
 ## Counts verified against SQL
 
 The numbers the app shows were checked against the database, not only against
@@ -182,12 +254,28 @@ the API. For each instance the installed `sqlQuery` was read back from
   because none of those three favorites carries a category or
   data-element-group-set dimension on this seed (and there are no
   category-option group sets to carry one at all).
+- 2.42.6 — 118 rows, identical in all three places (`psql` direct execution
+  of the installed `sqlQuery`, `GET /sqlViews/GOLswS44mh8/data?paging=false`,
+  and the rendered table). Only 8 rows are non-zero: Sex (Category) 15
+  (31.25% / 71.4%), OPD Age(0-28days+) (Category) 12 (25.0% / 57.1%),
+  Reporting Status (Organisation unit group set) 6 (12.5% / 28.6%), then five
+  rows tied at 3 views each (6.25% / 14.3%): 1.3.28 Nutrition Services (Age
+  Groups), Authority, Nutrition Pregnancy Status, Operational Status,
+  Ownership. The 21-view denominator (15 + 6, i.e.
+  `percent_of_favorite_views` for Sex = 15/21 = 71.4%) matches exactly the
+  raw `datastatisticsevent` rows recorded by `generate-view-events.sh`: 5+4+3
+  +2+1 = 15 `VISUALIZATION_VIEW` and 3+2+1 = 6 `EVENT_VISUALIZATION_VIEW`,
+  confirmed directly with `psql`
+  (`SELECT favoriteuid, eventtype, count(*) FROM datastatisticsevent GROUP
+  BY favoriteuid, eventtype`). No `DATAELEMENT_GROUP_SET` or
+  `CATEGORYOPTION_GROUP_SET` row exists at all, because this seed defines no
+  objects of either type.
 
 ## Console/network hygiene
 
 No console errors, page errors, React key warnings or unexpected HTTP errors
-from the app on 2.40.12, 2.41.10 or 2.43.1. Filtered as platform noise, not
-app defects:
+from the app on 2.40.12, 2.41.10, 2.42.6 or 2.43.1. Filtered as platform
+noise, not app defects:
 
 - `Error: This window is not a secure context … PWA features will not work` —
   the App Platform's offline/PWA layer on a plain-http test instance. Logged
@@ -201,18 +289,19 @@ app defects:
 ## Screenshots
 
 In `screenshots/`, named `<version>-<step>.png` (2.41.10 uses a short `2.41-`
-prefix):
+prefix; 2.42.6 uses a short `2.42-` prefix):
 
-| Step | 2.40.12 | 2.41.10 | 2.43.1 |
-|---|---|---|---|
-| Create notice | `2.40.12-01-missing-notice.png` | `2.41-01-missing-notice.png` | `2.43.1-01-missing-notice.png` |
-| Usage table | `2.40.12-02-table.png` | `2.41-02-table.png` | `2.43.1-02-table.png` |
-| Filtered to one type | `2.40.12-03-filter.png` | `2.41-03-filter.png` | `2.43.1-03-filter.png` |
-| Sorted | `2.40.12-04-sorted.png` | `2.41-04-sorted.png` | `2.43.1-04-sorted.png` |
-| Disable dialog | `2.40.12-06-disable-dialog.png` | `2.41-06-disable-dialog.png` | `2.43.1-06-disable-dialog.png` |
-| After disabling objects | `2.40.12-05-after-disable.png` | `2.41-05-after-disable.png` (3 objects, not 4 — see notes) | `2.43.1-05-after-disable.png` |
-| View removed | `2.40.12-07-removed.png` | `2.41-07-removed.png` | `2.43.1-07-removed.png` |
-| Outdated (legacy) view notice | `2.40.12-08-outdated-notice.png` | `2.41-08-outdated-notice.png` (suite's synthetic legacy view) and `2.41-08-outdated-notice-legacy-appjs.png` (the actual historical `sql_view_41` from `git show 7b8c7e1:src/app.js`) | `2.43.1-08-outdated-notice.png` |
-| After update | `2.40.12-09-after-update.png` | `2.41-09-after-update.png` and `2.41-09-after-update-legacy-appjs.png` | `2.43.1-09-after-update.png` |
-| Limited user, create refused | `2.40.12-10-limited-user.png` | not captured (check 5 skipped on this instance) | `2.43.1-10-limited-user.png` |
-| Data-read error state | `2.40.12-11-data-error.png` | not captured (scenario unreachable on this instance — see notes) | `2.43.1-11-data-error.png` |
+| Step | 2.40.12 | 2.41.10 | 2.42.6 | 2.43.1 |
+|---|---|---|---|---|
+| Create notice | `2.40.12-01-missing-notice.png` | `2.41-01-missing-notice.png` | `2.42-01-missing-notice.png` | `2.43.1-01-missing-notice.png` |
+| Usage table | `2.40.12-02-table.png` | `2.41-02-table.png` | `2.42-02-table.png` | `2.43.1-02-table.png` |
+| Filtered to one type | `2.40.12-03-filter.png` | `2.41-03-filter.png` | `2.42-03-filter.png` | `2.43.1-03-filter.png` |
+| Sorted | `2.40.12-04-sorted.png` | `2.41-04-sorted.png` | `2.42-04-sorted.png` | `2.43.1-04-sorted.png` |
+| Disable dialog | `2.40.12-06-disable-dialog.png` | `2.41-06-disable-dialog.png` | `2.42-06-disable-dialog.png` | `2.43.1-06-disable-dialog.png` |
+| After disabling objects | `2.40.12-05-after-disable.png` | `2.41-05-after-disable.png` (3 objects, not 4 — see notes) | `2.42-05-after-disable.png` (2 objects, not 4 — see notes) | `2.43.1-05-after-disable.png` |
+| View removed | `2.40.12-07-removed.png` | `2.41-07-removed.png` | `2.42-07-removed.png` | `2.43.1-07-removed.png` |
+| Outdated (legacy) view notice | `2.40.12-08-outdated-notice.png` | `2.41-08-outdated-notice.png` (suite's synthetic legacy view) and `2.41-08-outdated-notice-legacy-appjs.png` (the actual historical `sql_view_41` from `git show 7b8c7e1:src/app.js`) | not captured (check 2 out of scope on this instance) | `2.43.1-08-outdated-notice.png` |
+| After update | `2.40.12-09-after-update.png` | `2.41-09-after-update.png` and `2.41-09-after-update-legacy-appjs.png` | not captured (check 2 out of scope on this instance) | `2.43.1-09-after-update.png` |
+| Limited user, create refused | `2.40.12-10-limited-user.png` | not captured (check 5 skipped on this instance) | not captured (check 5 out of scope on this instance) | `2.43.1-10-limited-user.png` |
+| Data-read error state | `2.40.12-11-data-error.png` | not captured (scenario unreachable on this instance — see notes) | `2.42-11-data-error-limitation.png` (shows the table, not an error — the scenario is unreachable on this instance, see notes) | `2.43.1-11-data-error.png` |
+| `restore-view` exception (L9 artifact) | n/a | n/a | `2.42-12-restore-view-limitation.png` (shows the table, not a notice box — see notes) | n/a |

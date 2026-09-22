@@ -20,6 +20,25 @@ the seed defines zero `categoryOptionGroupSets`, and both `admin` and
 data-read-denied scenario cannot be reproduced on this instance with any
 standard account.
 
+**Update, review pass C (2026-09-21)**: **2.42.6** (`agent-cdd-ehr42`, EHR
+"ehr-meta" seed) tested against the same fix-wave bundle, functional checks
+1, 3, 4, 6, 7, 8, 9 only (checks 2 and 5 do not apply to this instance — see
+`UI-TEST-RESULTS.md` "2.42.6-specific notes"). **Check 7 (global shell) is
+confirmed live for the first time on the version that introduces it**: the
+installed app renders inside the 2.42 global-shell iframe with exactly one
+visible header bar, same as the 2.43.1 result in pass A. No new app defect
+was found. One new LOW finding (**L10**) documents a second test-suite-only
+gap: the suite's "sort by name" assertion compares against Python's
+`str.lower`-keyed sort, which is not locale-aware, while the app correctly
+uses the browser's `localeCompare`; the EHR seed's category names (heavy use
+of `<`, `(`, `,` inside names, e.g. `"Age(<1 Yr, 50+Yrs)"`) are the first in
+this review to expose the divergence. Two suite steps fail on this instance
+for reasons that are properties of the EHR seed, not the app: it defines
+zero `dataElementGroupSets` and zero `categoryOptionGroupSets` at all, and
+`local_admin` (the only account that can drive this seed) holds `ALL`, so
+the data-read-denied scenario is unreachable here too, same root cause as
+on 2.41.10.
+
 ## Summary
 
 The App Platform rewrite is in good shape. `yarn lint` is clean and all 63
@@ -196,6 +215,36 @@ None.
   `restore-view` does. Left undone — no source or script under `src/`/
   `scripts/` is affected, and this is a review deliverable, not the app
   itself.
+
+- **L10 (new, review pass C, 2026-09-21). `e2e/flows.py`'s name-sort
+  assertion is not locale-aware, unlike the app it is testing** —
+  test-suite-only, not an app defect. `_sort_checks` (`e2e/flows.py:240-251`)
+  computes the expected ascending/descending order with Python's
+  `sorted(names, key=str.lower)`, i.e. plain code-point comparison after
+  lowercasing. The app itself sorts with
+  `a.localeCompare(b, undefined, { sensitivity: 'base' })`
+  (`src/components/usageTableUtils.ts:10`), which is correct — ICU collation,
+  not naive code-point order, is the right choice for a name column. The two
+  orderings usually agree, so this was never observed on the 2.40/2.41/2.43
+  Sierra Leone/EMIS seeds. The EHR seed's category names expose the gap:
+  names built from `<`, `(`, `,`, and digits (`"Age(<1 Yr, 50+Yrs)"`,
+  `"Age(0-4Yrs,25-49Yrs,50+Yrs)"`, `"Nutrition(MAM_SAM_Overweight_Obese)"` vs
+  `"Nutrition(MAM_SAM)"`) collate differently from how they compare
+  byte-for-byte, so `sorted(..., key=str.lower)` disagrees with
+  `localeCompare` on 14 of 118 rows. Verified directly in Node (same V8/ICU
+  engine Chromium uses): `"Age(<1 Yr, 50+Yrs)".localeCompare("Age(0-4Yrs,25-
+  49Yrs,50+Yrs)", undefined, {sensitivity: "base"})` returns `-1`, i.e. the
+  app's displayed order is the *correct* `localeCompare` order; the
+  suite's Python comparator is simply the wrong oracle for this seed's data.
+  Reproduced live on `agent-cdd-ehr42` (2.42.6): `disable-per-type`'s
+  "Sort by name ascending/descending" steps FAIL while the on-screen order
+  is demonstrably right. Fix (test suite, not app code): reimplement the
+  expected order with the same comparator the app uses — either compare
+  through a headless JS `localeCompare` call (e.g. via
+  `page.evaluate`) instead of Python's `sorted`, or drop the strict-order
+  assertion in favour of a weaker check (e.g. "every adjacent pair compares
+  as ≤ under the same rule the row values were shown in"). Left undone — no
+  source or script under `src/`/`scripts/` is affected.
 
 ## Claims investigated and rejected
 
