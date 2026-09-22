@@ -3,12 +3,19 @@
     justify-content: space-between;
     align-items: flex-end;
     gap: var(--spacers-dp16);
-    margin-block-end: var(--spacers-dp12);
+    margin-block: var(--spacers-dp16);
+}
+
+.controls {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--spacers-dp12);
 }
 
 .count {
     color: var(--colors-grey700);
     font-size: 13px;
+    padding-block-end: var(--spacers-dp8);
 }
 
 .uid {
@@ -18,4 +25,8 @@
 
 .number {
     font-variant-numeric: tabular-nums;
+}
+
+.actionCell {
+    padding-inline: var(--spacers-dp12);
 }

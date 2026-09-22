@@ -9,13 +9,19 @@ import {
     DataTableRow,
 } from '@dhis2/ui'
 import React, { useState } from 'react'
-import { getDimensionType } from '../dimensionTypes'
 import { UsageRow } from '../hooks/useUsageData'
+import { ColumnChooser } from './ColumnChooser'
+import { ColumnHeaderLabel } from './ColumnHeaderLabel'
+import {
+    COLUMN_DEFS,
+    ColumnKey,
+    loadVisibleColumns,
+    saveVisibleColumns,
+} from './columns'
 import { TypeFilter } from './TypeFilter'
 import classes from './UsageTable.module.css'
 import {
     filterRows,
-    formatPercent,
     SortColumn,
     SortDirection,
     sortRows,
@@ -30,42 +36,16 @@ type Props = {
 // Mirrors @dhis2/ui's DataTableSortDirection, which is not re-exported as a type
 type HeaderSortDirection = 'asc' | 'desc' | 'default'
 
-type ColumnDef = {
-    column: SortColumn
-    label: () => string
-    align?: 'left' | 'right'
-}
-
 // Numeric columns start descending (most-viewed first, this tool's
 // purpose); text columns start ascending.
-const NUMERIC_COLUMNS: SortColumn[] = ['views', 'percent', 'percentOfViews']
-
 const defaultDirectionFor = (column: SortColumn): SortDirection =>
-    NUMERIC_COLUMNS.includes(column) ? 'desc' : 'asc'
-
-const COLUMNS: ColumnDef[] = [
-    { column: 'type', label: () => i18n.t('Type') },
-    { column: 'name', label: () => i18n.t('Name') },
-    { column: 'uid', label: () => i18n.t('UID') },
-    {
-        column: 'views',
-        label: () => i18n.t('Views (12 months)'),
-        align: 'right',
-    },
-    {
-        column: 'percent',
-        label: () => i18n.t('% of dimension views'),
-        align: 'right',
-    },
-    {
-        column: 'percentOfViews',
-        label: () => i18n.t('% of favorite views'),
-        align: 'right',
-    },
-]
+    COLUMN_DEFS.find((c) => c.key === column)?.numeric ? 'desc' : 'asc'
 
 export const UsageTable = ({ rows, onDisable }: Props) => {
     const [filter, setFilter] = useState<TypeFilterValue>('ALL')
+    const [visibleKeys, setVisibleKeys] = useState<ColumnKey[]>(() =>
+        loadVisibleColumns()
+    )
     const [sort, setSort] = useState<{
         column: SortColumn
         direction: SortDirection
@@ -74,11 +54,19 @@ export const UsageTable = ({ rows, onDisable }: Props) => {
         direction: 'desc',
     })
 
+    const visibleColumns = COLUMN_DEFS.filter((c) =>
+        visibleKeys.includes(c.key)
+    )
     const visibleRows = sortRows(
         filterRows(rows, filter),
         sort.column,
         sort.direction
     )
+
+    const changeColumns = (keys: ColumnKey[]) => {
+        setVisibleKeys(keys)
+        saveVisibleColumns(keys)
+    }
 
     const sortDirectionFor = (column: SortColumn): HeaderSortDirection =>
         sort.column === column ? sort.direction : 'default'
@@ -104,7 +92,13 @@ export const UsageTable = ({ rows, onDisable }: Props) => {
     return (
         <div>
             <div className={classes.toolbar}>
-                <TypeFilter value={filter} onChange={setFilter} />
+                <div className={classes.controls}>
+                    <TypeFilter value={filter} onChange={setFilter} />
+                    <ColumnChooser
+                        visible={visibleKeys}
+                        onChange={changeColumns}
+                    />
+                </div>
                 <span className={classes.count} data-test="usage-count">
                     {countLabel}
                 </span>
@@ -112,19 +106,19 @@ export const UsageTable = ({ rows, onDisable }: Props) => {
             <DataTable dataTest="usage-table">
                 <DataTableHead>
                     <DataTableRow>
-                        {COLUMNS.map(({ column, label, align }) => (
+                        {visibleColumns.map((column) => (
                             <DataTableColumnHeader
-                                key={column}
-                                dataTest={`usage-header-${column}`}
-                                align={align}
-                                name={column}
-                                sortDirection={sortDirectionFor(column)}
+                                key={column.key}
+                                dataTest={`usage-header-${column.key}`}
+                                align={column.align}
+                                name={column.key}
+                                sortDirection={sortDirectionFor(column.key)}
                                 sortIconTitle={i18n.t('Sort by {{column}}', {
-                                    column: label(),
+                                    column: column.label(),
                                 })}
-                                onSortIconClick={() => toggleSort(column)}
+                                onSortIconClick={() => toggleSort(column.key)}
                             >
-                                {label()}
+                                <ColumnHeaderLabel column={column} />
                             </DataTableColumnHeader>
                         ))}
                         <DataTableColumnHeader>
@@ -136,7 +130,7 @@ export const UsageTable = ({ rows, onDisable }: Props) => {
                     {visibleRows.length === 0 && (
                         <DataTableRow>
                             <DataTableCell
-                                colSpan={String(COLUMNS.length + 1)}
+                                colSpan={String(visibleColumns.length + 1)}
                                 align="center"
                             >
                                 {i18n.t('No enabled data dimensions found')}
@@ -148,34 +142,27 @@ export const UsageTable = ({ rows, onDisable }: Props) => {
                             key={`${row.type}-${row.uid}`}
                             dataTest="usage-row"
                         >
-                            <DataTableCell>
-                                {getDimensionType(row.type).getLabel()}
-                            </DataTableCell>
-                            <DataTableCell dataTest="usage-row-name">
-                                {row.name}
-                            </DataTableCell>
-                            <DataTableCell className={classes.uid}>
-                                {row.uid}
-                            </DataTableCell>
-                            <DataTableCell
-                                align="right"
-                                className={classes.number}
-                            >
-                                {row.views}
-                            </DataTableCell>
-                            <DataTableCell
-                                align="right"
-                                className={classes.number}
-                            >
-                                {formatPercent(row.percent)}
-                            </DataTableCell>
-                            <DataTableCell
-                                align="right"
-                                className={classes.number}
-                            >
-                                {formatPercent(row.percentOfViews)}
-                            </DataTableCell>
-                            <DataTableCell>
+                            {visibleColumns.map((column) => (
+                                <DataTableCell
+                                    key={column.key}
+                                    dataTest={
+                                        column.key === 'name'
+                                            ? 'usage-row-name'
+                                            : `usage-cell-${column.key}`
+                                    }
+                                    align={column.align}
+                                    className={
+                                        column.key === 'uid'
+                                            ? classes.uid
+                                            : column.numeric
+                                              ? classes.number
+                                              : undefined
+                                    }
+                                >
+                                    {column.format(row)}
+                                </DataTableCell>
+                            ))}
+                            <DataTableCell className={classes.actionCell}>
                                 <Button
                                     small
                                     destructive

@@ -50,6 +50,10 @@ const bodyRowNames = () =>
         .map((row) => within(row).getByTestId('usage-row-name').textContent)
 
 describe('UsageTable', () => {
+    beforeEach(() => {
+        window.localStorage.clear()
+    })
+
     it('renders rows sorted by views descending by default with type labels and percentages', () => {
         renderWithProvider(<UsageTable rows={rows} onDisable={jest.fn()} />)
         expect(bodyRowNames()).toEqual(['Facility Type', 'Gender', 'Age'])
@@ -148,5 +152,92 @@ describe('UsageTable', () => {
         expect(screen.getByTestId('usage-count').textContent).toBe(
             '1 enabled dimension'
         )
+    })
+
+    it('shows the default columns and hides the rest', () => {
+        renderWithProvider(<UsageTable rows={rows} onDisable={jest.fn()} />)
+        for (const key of [
+            'type',
+            'name',
+            'uid',
+            'favorites',
+            'views',
+            'percent',
+        ]) {
+            expect(
+                screen.getByTestId(`usage-header-${key}`)
+            ).toBeInTheDocument()
+        }
+        for (const key of [
+            'publicFavorites',
+            'sharedFavorites',
+            'privateFavorites',
+            'percentOfViews',
+        ]) {
+            expect(
+                screen.queryByTestId(`usage-header-${key}`)
+            ).not.toBeInTheDocument()
+        }
+    })
+
+    it('adds a column from the chooser and remembers it', async () => {
+        const user = userEvent.setup()
+        renderWithProvider(<UsageTable rows={rows} onDisable={jest.fn()} />)
+        await user.click(screen.getByRole('button', { name: /Columns/ }))
+        await user.click(
+            screen.getByRole('menuitemcheckbox', { name: /Private/ })
+        )
+        expect(
+            screen.getByTestId('usage-header-privateFavorites')
+        ).toBeInTheDocument()
+        expect(
+            JSON.parse(
+                window.localStorage.getItem(
+                    'data-dimension-disabler.columns'
+                ) ?? '[]'
+            )
+        ).toContain('privateFavorites')
+    })
+
+    it('renders the favorite counts in the row', async () => {
+        const user = userEvent.setup()
+        renderWithProvider(<UsageTable rows={rows} onDisable={jest.fn()} />)
+        const genderRow = screen
+            .getAllByTestId('usage-row')
+            .find(
+                (row) =>
+                    within(row).getByTestId('usage-row-name').textContent ===
+                    'Gender'
+            ) as HTMLElement
+        expect(
+            within(genderRow).getByTestId('usage-cell-favorites')
+        ).toHaveTextContent(String(rows[0].favorites))
+        await user.click(screen.getByRole('button', { name: /Columns/ }))
+        await user.click(
+            screen.getByRole('menuitemcheckbox', { name: /Public/ })
+        )
+        expect(
+            within(genderRow).getByTestId('usage-cell-publicFavorites')
+        ).toHaveTextContent(String(rows[0].publicFavorites))
+    })
+
+    it('sorts by favorites descending on first click', async () => {
+        const user = userEvent.setup()
+        renderWithProvider(<UsageTable rows={rows} onDisable={jest.fn()} />)
+        await user.click(
+            within(screen.getByTestId('usage-header-favorites')).getByRole(
+                'button'
+            )
+        )
+        const values = screen
+            .getAllByTestId('usage-cell-favorites')
+            .map((cell) => Number(cell.textContent))
+        expect(values).toEqual([...values].sort((a, b) => b - a))
+    })
+
+    it('shows an info tooltip icon on numeric headers only', () => {
+        renderWithProvider(<UsageTable rows={rows} onDisable={jest.fn()} />)
+        expect(screen.getByTestId('column-info-views')).toBeInTheDocument()
+        expect(screen.queryByTestId('column-info-name')).not.toBeInTheDocument()
     })
 })

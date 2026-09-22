@@ -7,5 +7,6 @@
 .footer {
     margin-block-start: var(--spacers-dp24);
     padding-block-start: var(--spacers-dp16);
+    padding-inline: var(--spacers-dp8);
     border-top: 1px solid var(--colors-grey300);
 }
