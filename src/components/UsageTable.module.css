@@ -1,0 +1,21 @@
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: var(--spacers-dp16);
+    margin-block-end: var(--spacers-dp12);
+}
+
+.count {
+    color: var(--colors-grey700);
+    font-size: 13px;
+}
+
+.uid {
+    font-family: monospace;
+    color: var(--colors-grey700);
+}
+
+.number {
+    font-variant-numeric: tabular-nums;
+}
