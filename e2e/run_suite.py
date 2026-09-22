@@ -38,7 +38,6 @@ import flows  # noqa: E402
 from dhis2_api import Dhis2Client, hostname_of  # noqa: E402
 
 DEFAULT_USER = "admin"
-DEFAULT_PASSWORD = os.environ.get("DHIS2_PASS", "district")
 VIEWPORT = {"width": 1400, "height": 1000}
 BROWSER_ARGS = ["--no-sandbox", "--disable-dev-shm-usage"]
 
@@ -50,11 +49,15 @@ def read_settings():
     out_dir = Path(
         os.environ.get("E2E_OUT_DIR", str(Path(__file__).resolve().parent / "results"))
     )
+    # No fallback: a password belongs in the environment, not in the repo.
+    password = os.environ.get("DHIS2_PASS")
+    if not password:
+        raise SystemExit("DHIS2_PASS is not set")
     selected = os.environ.get("E2E_FLOWS", "")
     return {
         "base_url": base_url.rstrip("/"),
         "user": os.environ.get("DHIS2_USER", DEFAULT_USER),
-        "password": os.environ.get("DHIS2_PASS", DEFAULT_PASSWORD),
+        "password": password,
         "label": os.environ.get("E2E_LABEL"),
         "out_dir": out_dir,
         "flow_ids": [name for name in selected.split(",") if name],

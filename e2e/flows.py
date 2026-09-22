@@ -6,8 +6,11 @@ the view installed again and every dimension re-enabled.
 
 import os
 import re
+import secrets
+import string
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
 
 import app_driver as ui
 from dhis2_api import (
@@ -66,7 +69,18 @@ MAX_HEADER_OFFSET_PX = 13
 
 LIMITED_ROLE_NAME = "cdd-e2e-app-only"
 LIMITED_USERNAME = "cdde2elimited"
-LIMITED_PASSWORD = os.environ.get("DHIS2_LIMITED_PASSWORD", "Limited123!")
+# The suite creates this user and deletes it again, so its password is
+# generated per run and no credential is kept in the repo. DHIS2 requires at
+# least 8 characters including an upper case letter, a digit and a symbol.
+LIMITED_PASSWORD = os.environ.get("DHIS2_LIMITED_PASSWORD") or "".join(
+    (
+        secrets.choice(string.ascii_uppercase),
+        secrets.choice(string.ascii_lowercase),
+        secrets.choice(string.digits),
+        secrets.choice("!@#$%&*"),
+        secrets.token_urlsafe(12),
+    )
+)
 SQL_VIEW_AUTHORITY_TEXT = "Add/Update SQL view"
 # The limited role needs an authority the acting user can actually grant.
 PREFERRED_LIMITED_AUTHORITIES = ("F_SQLVIEW_EXECUTE", "F_DATAVALUE_ADD")
@@ -86,7 +100,7 @@ class Context:
     browser: object
     # Superuser client used to create the throwaway limited user: demo
     # `admin` accounts often lack ALL and cannot grant an app authority.
-    provisioner: Dhis2Client = None
+    provisioner: Optional[Dhis2Client] = None
     disabled: list = field(default_factory=list)
 
 
@@ -540,7 +554,7 @@ def _disable_one(ctx, frame, key, label, row):
 def flow_reenable(ctx):
     """Leave the instance as found: re-enable everything the suite disabled."""
     results = []
-    for endpoint, uid, name in list(ctx.disabled):
+    for endpoint, uid, name in ctx.disabled:
         status = ctx.client.set_data_dimension(endpoint, uid, True)
         value = ctx.client.data_dimension(endpoint, uid)
         results.append(
@@ -684,7 +698,7 @@ def _grantable_authority(client):
     for candidate in PREFERRED_LIMITED_AUTHORITIES:
         if candidate in held:
             return candidate
-    return sorted(held)[0]
+    return min(held)
 
 
 def _app_authority(client):

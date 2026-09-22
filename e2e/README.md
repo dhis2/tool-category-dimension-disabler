@@ -25,19 +25,19 @@ credential is hard-coded, so the same run works on any version from 2.40 up.
 ## Running
 
 ```bash
-DHIS2_URL=http://dhis2-example:8080 python3 e2e/run_suite.py
+DHIS2_URL=http://dhis2-example:8080 DHIS2_PASS=district python3 e2e/run_suite.py
 ```
 
-| Variable                          | Default              | Meaning                                                                                                                  |
-| --------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `DHIS2_URL`                       | _(required)_         | Instance base URL                                                                                                        |
-| `DHIS2_USER` / `DHIS2_PASS`       | `admin` / `district` | Account the app is driven as                                                                                             |
-| `E2E_LABEL`                       | server version       | Label in results and screenshot names                                                                                    |
-| `E2E_OUT_DIR`                     | `e2e/results`        | Screenshots + `results-<label>.{json,md}`                                                                                |
-| `E2E_FLOWS`                       | all                  | Comma-separated flow ids to run                                                                                          |
-| `E2E_HEADED`                      | –                    | `1` to watch the browser                                                                                                 |
-| `E2E_SUPERUSER` / `E2E_SUPERPASS` | –                    | ALL-authority account: creates the throwaway limited user, and reads the sharing of favorites the acting user cannot see |
-| `DHIS2_LIMITED_PASSWORD`          | `Limited123!`        | Password set on the throwaway limited user created for the `limited-user` flow                                           |
+| Variable                          | Default                | Meaning                                                                                                                  |
+| --------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `DHIS2_URL`                       | _(required)_           | Instance base URL                                                                                                        |
+| `DHIS2_USER` / `DHIS2_PASS`       | `admin` / _(required)_ | Account the app is driven as; the password has no default, so no credential lives in the repo                            |
+| `E2E_LABEL`                       | server version         | Label in results and screenshot names                                                                                    |
+| `E2E_OUT_DIR`                     | `e2e/results`          | Screenshots + `results-<label>.{json,md}`                                                                                |
+| `E2E_FLOWS`                       | all                    | Comma-separated flow ids to run                                                                                          |
+| `E2E_HEADED`                      | –                      | `1` to watch the browser                                                                                                 |
+| `E2E_SUPERUSER` / `E2E_SUPERPASS` | –                      | ALL-authority account: creates the throwaway limited user, and reads the sharing of favorites the acting user cannot see |
+| `DHIS2_LIMITED_PASSWORD`          | generated per run      | Password set on the throwaway limited user created for the `limited-user` flow                                           |
 
 `E2E_SUPERUSER` is needed on the DHIS2 demo databases: their `admin` has
 neither `ALL` nor the generated `M_<app>` authority, so it cannot grant a role
@@ -48,7 +48,7 @@ and without it those cross-checks report SKIP. Broker instances ship
 `local_admin` / `district`, which has `ALL`:
 
 ```bash
-DHIS2_URL=http://dhis2-example:8080 \
+DHIS2_URL=http://dhis2-example:8080 DHIS2_PASS=district \
 E2E_SUPERUSER=local_admin E2E_SUPERPASS=district \
 python3 e2e/run_suite.py
 ```
