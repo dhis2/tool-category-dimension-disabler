@@ -1,4 +1,4 @@
-import { CircularLoader } from '@dhis2/ui'
+import { CircularLoader, CssVariables } from '@dhis2/ui'
 import React from 'react'
 import classes from './App.module.css'
 import { Intro } from './components/Intro'
@@ -27,6 +27,10 @@ const App = () => {
 
     return (
         <div className={classes.container}>
+            {/* The app-platform shell does not provide the design tokens
+                the stylesheets below use; without this every var(--spacers-*)
+                and var(--colors-*) declaration is dropped. */}
+            <CssVariables colors spacers />
             <Intro />
             {status === 'LOADING' && (
                 <div className={classes.loader}>
