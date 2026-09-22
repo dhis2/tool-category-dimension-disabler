@@ -110,6 +110,11 @@ export const UsageTable = ({ rows, onDisable }: Props) => {
                             <DataTableColumnHeader
                                 key={column.key}
                                 dataTest={`usage-header-${column.key}`}
+                                className={
+                                    column.numeric
+                                        ? classes.numericHeader
+                                        : undefined
+                                }
                                 align={column.align}
                                 name={column.key}
                                 sortDirection={sortDirectionFor(column.key)}

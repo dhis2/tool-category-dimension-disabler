@@ -30,3 +30,15 @@
 .actionCell {
     padding-inline: var(--spacers-dp12);
 }
+
+/*
+ * DataTableColumnHeader's `align` prop only sets `text-align` on the cell: its
+ * own justify-content rule targets a `.label` element the component never
+ * renders, so the label and sort icon stay packed to the left of a right-
+ * aligned numeric column, 89px from the numbers below them (measured on
+ * 2.43.1). Reversing the header's flex row puts the label's right edge exactly
+ * above the numbers, with the sort icon beside it.
+ */
+.numericHeader :global(span.top) {
+    flex-direction: row-reverse;
+}
