@@ -39,4 +39,24 @@ describe('ColumnChooser', () => {
         )
         expect(onChange).toHaveBeenLastCalledWith(['type', 'name', 'views'])
     })
+
+    it('marks every column with a checkbox showing whether it is shown', async () => {
+        const user = userEvent.setup()
+        renderWithProvider(
+            <ColumnChooser
+                visible={['type', 'name', 'uid', 'views']}
+                onChange={jest.fn()}
+            />
+        )
+        await user.click(screen.getByRole('button', { name: /Columns/ }))
+
+        expect(screen.getAllByTestId(/^column-check-/)).toHaveLength(10)
+        expect(screen.getByTestId('column-check-uid')).toHaveAttribute(
+            'data-checked',
+            'true'
+        )
+        expect(
+            screen.getByTestId('column-check-publicFavorites')
+        ).toHaveAttribute('data-checked', 'false')
+    })
 })
