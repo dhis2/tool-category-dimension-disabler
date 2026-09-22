@@ -1,0 +1,11 @@
+.loader {
+    display: flex;
+    justify-content: center;
+    padding: var(--spacers-dp32);
+}
+
+.footer {
+    margin-block-start: var(--spacers-dp24);
+    padding-block-start: var(--spacers-dp16);
+    border-top: 1px solid var(--colors-grey300);
+}

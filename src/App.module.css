@@ -10,3 +10,9 @@
     font-size: 20px;
     margin: 0 0 var(--spacers-dp16) 0;
 }
+
+.loader {
+    display: flex;
+    justify-content: center;
+    padding: var(--spacers-dp32);
+}
