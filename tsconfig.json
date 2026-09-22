@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "noEmit": true,
+        "skipLibCheck": true,
+        "allowJs": true,
+        "jsx": "react",
+        "esModuleInterop": true,
+        "strict": true,
+        "target": "ESNext",
+        "module": "esnext",
+        "moduleResolution": "node",
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["src/*"]
+        }
+    },
+    "include": ["src", "types", "jest.setup.ts"]
+}

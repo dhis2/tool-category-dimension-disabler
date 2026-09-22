@@ -1,10 +1,14 @@
+# DHIS2 Platform
+node_modules
+.d2
+src/locales
+build
+
+# Editors / OS
 .history
 .tmp
-compiled
-build
-manifest.webapp
-node_modules
 .vscode
-bin
-d2auth.json
+.DS_Store
+
+# Agent scratch
 .superpowers

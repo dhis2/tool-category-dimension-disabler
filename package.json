@@ -1,52 +1,44 @@
 {
-  "name": "tool-category-dimension-disabler",
-  "description": "Tool to help you disable categories which are not used in any favorites",
-  "version": "0.1.0",
-  "dependencies": {
-    "datatables.net-dt": "^2.1.8"
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "^3.2.0",
-    "@eslint/js": "^9.15.0",
-    "@typescript-eslint/eslint-plugin": "^8.17.0",
-    "copy-webpack-plugin": "^12.0.2",
-    "css-loader": "^7.1.2",
-    "d2-manifest": "^1.0.0",
-    "eslint": "^9.16.0",
-    "eslint-plugin-react": "^7.37.2",
-    "file-loader": "^6.2.0",
-    "globals": "^15.12.0",
-    "html-loader": "^5.1.0",
-    "html-webpack-plugin": "^5.6.3",
-    "style-loader": "^4.0.0",
-    "typescript": "^5.7.2",
-    "url-loader": "^4.1.1",
-    "webpack": "^5.96.1",
-    "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.1.0"
-  },
-  "main": "./src/app.js",
-  "scripts": {
-    "build": "webpack --progress",
-    "lint": "eslint src",
-    "manifest": "d2-manifest package.json build/manifest.webapp",
-    "postbuild": "npm run manifest",
-    "prebuild": "rm -rf build && npm run lint",
-    "start": "d2-manifest package.json manifest.webapp && webpack-dev-server",
-    "zip": "rm -rf compiled && npm run build && mkdir compiled && cd build && zip -r ../compiled/$npm_package_name.zip *"
-  },
-  "manifest.webapp": {
-    "developer": {
-      "company": "HISP Centre - Univeristy of Oslo",
-      "email": "dev@dhis2.org",
-      "name": "HISP Centre"
+    "name": "data-dimension-disabler",
+    "version": "1.0.0",
+    "description": "Rank categories and group sets that are enabled as data dimensions by how often favorites using them are viewed, and disable the unused ones",
+    "license": "BSD-3-Clause",
+    "private": true,
+    "scripts": {
+        "build": "d2-app-scripts build",
+        "start": "d2-app-scripts start",
+        "test": "d2-app-scripts test",
+        "deploy": "d2-app-scripts deploy",
+        "lint": "eslint && prettier -c . && tsc --noEmit",
+        "format": "prettier . -w"
     },
-    "icons": {
-      "48": "img/icons/app_logo_48x48.png",
-      "96": "img/icons/app_logo_96x96.png"
+    "dependencies": {
+        "@dhis2/app-runtime": "^3.17.4",
+        "@dhis2/d2-i18n": "^1.2.0",
+        "@dhis2/ui": "^10.17.0",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1"
     },
-    "name": "Category Dimension Disabler",
-    "version": "0.1.0",
-    "appType": "APP"
-  }
+    "devDependencies": {
+        "@dhis2/cli-app-scripts": "12.11.5",
+        "@dhis2/config-eslint": "^0.2.2",
+        "@dhis2/config-prettier": "^0.2.2",
+        "@eslint/compat": "^2.0.0",
+        "@testing-library/dom": "^10.4.0",
+        "@testing-library/jest-dom": "^6.6.3",
+        "@testing-library/react": "^16.3.0",
+        "@testing-library/user-event": "^14.6.1",
+        "@types/jest": "^29.5.14",
+        "@types/react": "^18.3.12",
+        "@types/react-dom": "^18.3.1",
+        "eslint": "^9.39.0",
+        "prettier": "^3.7.0",
+        "typescript": "^5.9.0",
+        "vite": "^7.3.0"
+    },
+    "jest": {
+        "setupFilesAfterEnv": [
+            "<rootDir>/jest.setup.ts"
+        ]
+    }
 }
