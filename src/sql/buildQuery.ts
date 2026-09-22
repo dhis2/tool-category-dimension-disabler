@@ -4,6 +4,10 @@ export const SQL_VIEW_COLUMNS = [
     'type',
     'uid',
     'name',
+    'favorites',
+    'public_favorites',
+    'shared_favorites',
+    'private_favorites',
     'views',
     'percent',
     'percent_of_views',
@@ -65,14 +69,33 @@ const favoriteSourcesFor = (type: DimensionType): readonly FavoriteSource[] =>
         ? FAVORITE_SOURCES.filter((source) => source.prefix === 'visualization')
         : FAVORITE_SOURCES
 
-/** (entity id, favorite uid) pairs for every favorite that uses the dimension */
+/**
+ * Sharing class of a favorite from its `sharing` JSONB (present on
+ * visualization, map and eventvisualization on 2.40-2.43):
+ *  public  - public access string grants metadata read (first char 'r')
+ *  shared  - not public, but shared with at least one user or user group
+ *  private - neither
+ * users/userGroups may be absent, a JSON null, or {}; none of those count
+ * as shared, only a non-empty JSON object does. jsonb_typeof(...) is NULL
+ * for an absent key and 'null' (not 'object') for a JSON null literal, so
+ * both fall through to private; COALESCE alone would not catch the JSON
+ * null case, since `sharing->'users'` for `{"users": null}` is a non-NULL
+ * jsonb null, not SQL NULL.
+ */
+const SHARING_CLASS_SQL = `CASE WHEN LEFT(f.sharing->>'public', 1) = 'r' THEN 'public'
+             WHEN (jsonb_typeof(f.sharing->'users') = 'object' AND f.sharing->'users' <> '{}'::jsonb)
+               OR (jsonb_typeof(f.sharing->'userGroups') = 'object' AND f.sharing->'userGroups' <> '{}'::jsonb) THEN 'shared'
+             ELSE 'private' END`
+
+/** (entity id, favorite uid, sharing class) rows for every favorite that uses the dimension */
 const usageSubquery = (type: DimensionType): string =>
     favoriteSourcesFor(type)
         .map(
             ({
                 prefix,
                 favoriteJoin,
-            }) => `      SELECT DISTINCT d.${type.dimensionForeignKey} AS objectid, f.uid AS favoriteuid
+            }) => `      SELECT DISTINCT d.${type.dimensionForeignKey} AS objectid, f.uid AS favoriteuid,
+        ${SHARING_CLASS_SQL} AS sharingclass
         FROM ${prefix}_${type.joinTableSuffix} a
         JOIN ${type.dimensionTable} d ON d.${type.dimensionPrimaryKey} = a.${type.dimensionPrimaryKey}
         ${favoriteJoin}`
@@ -80,7 +103,12 @@ const usageSubquery = (type: DimensionType): string =>
         .join('\n      UNION\n')
 
 const summaryBlock = (type: DimensionType, minor: number): string =>
-    `  SELECT '${type.key}' AS type, z.uid, z.name, COALESCE(SUM(fv.views), 0) AS views
+    `  SELECT '${type.key}' AS type, z.uid, z.name,
+    COUNT(DISTINCT y.favoriteuid) AS favorites,
+    COUNT(DISTINCT y.favoriteuid) FILTER (WHERE y.sharingclass = 'public') AS public_favorites,
+    COUNT(DISTINCT y.favoriteuid) FILTER (WHERE y.sharingclass = 'shared') AS shared_favorites,
+    COUNT(DISTINCT y.favoriteuid) FILTER (WHERE y.sharingclass = 'private') AS private_favorites,
+    COALESCE(SUM(fv.views), 0) AS views
   FROM ${type.table(minor)} z
   LEFT JOIN (
 ${usageSubquery(type)}
@@ -108,10 +136,12 @@ ${DIMENSION_TYPES.map((type) => summaryBlock(type, minor)).join('\n  UNION ALL\n
 totals AS (
   SELECT SUM(views) AS total FROM summary
 )
-SELECT s.type, s.uid, s.name, s.views,
+SELECT s.type, s.uid, s.name,
+  s.favorites, s.public_favorites, s.shared_favorites, s.private_favorites,
+  s.views,
   COALESCE(s.views::double precision / NULLIF(t.total, 0) * 100.0, 0) AS percent,
   COALESCE(s.views::double precision / NULLIF(f.count, 0) * 100.0, 0) AS percent_of_views
 FROM summary s
 CROSS JOIN totals t
 CROSS JOIN total_favorite_views f
-ORDER BY s.views DESC, s.name`
+ORDER BY s.views DESC, s.favorites DESC, s.name`

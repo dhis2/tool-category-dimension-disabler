@@ -72,6 +72,47 @@ describe('buildQuery', () => {
         }
     })
 
+    it('classifies each favorite as public, shared or private from its sharing JSON', () => {
+        const sql = buildQuery(43)
+        // one classification per favorite kind (visualization, map, eventvisualization)
+        expect(
+            sql.match(
+                /CASE WHEN LEFT\(f\.sharing->>'public', 1\) = 'r' THEN 'public'/g
+            )?.length
+        ).toBe(
+            // 3 kinds for CATEGORY, ORGUNIT_GROUP_SET, CATEGORYOPTION_GROUP_SET + 1 for DATAELEMENT_GROUP_SET
+            3 * 3 + 1
+        )
+        expect(sql).toContain(
+            "jsonb_typeof(f.sharing->'users') = 'object' AND f.sharing->'users' <> '{}'::jsonb"
+        )
+        expect(sql).toContain(
+            "jsonb_typeof(f.sharing->'userGroups') = 'object' AND f.sharing->'userGroups' <> '{}'::jsonb"
+        )
+    })
+
+    it('counts favorites once per dimension and splits them by sharing class', () => {
+        const sql = buildQuery(43)
+        expect(
+            sql.match(/COUNT\(DISTINCT y\.favoriteuid\) AS favorites/g)
+        ).toHaveLength(4)
+        expect(
+            sql.match(
+                /COUNT\(DISTINCT y\.favoriteuid\) FILTER \(WHERE y\.sharingclass = 'public'\) AS public_favorites/g
+            )
+        ).toHaveLength(4)
+        expect(
+            sql.match(
+                /FILTER \(WHERE y\.sharingclass = 'shared'\) AS shared_favorites/g
+            )
+        ).toHaveLength(4)
+        expect(
+            sql.match(
+                /FILTER \(WHERE y\.sharingclass = 'private'\) AS private_favorites/g
+            )
+        ).toHaveLength(4)
+    })
+
     it('selects the documented output columns in order', () => {
         const sql = buildQuery(43)
         const selectLine = sql.slice(sql.lastIndexOf('SELECT s.type'))
@@ -79,12 +120,16 @@ describe('buildQuery', () => {
             'type',
             'uid',
             'name',
+            'favorites',
+            'public_favorites',
+            'shared_favorites',
+            'private_favorites',
             'views',
             'percent',
             'percent_of_views',
         ])
         expect(selectLine).toMatch(
-            /SELECT s\.type, s\.uid, s\.name, s\.views,[\s\S]*AS percent,[\s\S]*AS percent_of_views/
+            /SELECT s\.type, s\.uid, s\.name,\s+s\.favorites, s\.public_favorites, s\.shared_favorites, s\.private_favorites,\s+s\.views,[\s\S]*AS percent,[\s\S]*AS percent_of_views/
         )
     })
 
