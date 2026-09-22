@@ -28,7 +28,6 @@ Supported DHIS2 versions: 2.40, 2.41, 2.42, 2.43.
   is done in the Maintenance app.
 - Replacing the SQL view with Web API queries. The 12-month view-count logic
   needs `datastatisticsevent`, which is only reachable through SQL.
-- TypeScript. The app stays plain JavaScript.
 - Any change to the analytics tables themselves.
 
 ## 3. Architecture
@@ -37,7 +36,9 @@ Supported DHIS2 versions: 2.40, 2.41, 2.42, 2.43.
 
 | Concern         | Choice                                                   |
 |-----------------|----------------------------------------------------------|
-| Build/dev/test  | `@dhis2/cli-app-scripts` (`d2-app-scripts`)              |
+| Language        | TypeScript (the App Platform scaffolder and skill default; decided 2026-09-21) |
+| Package manager | yarn 1 (existing repo convention; the CI workflows use it) |
+| Build/dev/test  | `@dhis2/cli-app-scripts` 12 (`d2-app-scripts`, Vite, Jest) |
 | Data access     | `@dhis2/app-runtime` (`useDataQuery`, `useDataMutation`, `useDataEngine`, `useConfig`) |
 | UI              | `@dhis2/ui` (DataTable, Button, NoticeBox, Modal, SingleSelect, CircularLoader) |
 | Header bar      | provided by the platform shell; the `check-header-bar.js` logic, `dhis-header-bar.js` resource and `header.css` are deleted |
@@ -51,25 +52,27 @@ Removed: webpack config, `d2-manifest`, `d2auth.json`, jQuery, DataTables,
 
 ```
 src/
-  App.jsx                      shell: status hook -> notice or table
-  dimensionTypes.js            type -> { label, endpoint, sqlTable, ... }
+  App.tsx                      shell: status hook -> notice or table
+  dimensionTypes.ts            type -> { label, endpoint, sql table names, ... }
   sql/
-    sqlView.js                 SQL view definition (uid, name, sharing, variants)
-    sqlView.test.js
-    buildQuery.js              builds the SQL text for a given server minor
-    buildQuery.test.js
+    buildQuery.ts              builds the SQL text for a given server minor
+    sqlView.ts                 SQL view definition (uid, name, sharing) + outdated check
   hooks/
-    useSqlViewStatus.js        MISSING | OUTDATED | READY | ERROR
-    useUsageData.js            fetches /sqlViews/{uid}/data.json, maps rows
-    useUsageData.test.js
+    useSqlViewStatus.ts        MISSING | OUTDATED | READY | ERROR
+    useUsageData.ts            fetches /sqlViews/{uid}/data, maps rows
+    useSqlViewMutations.ts     create / update / remove the view
+    useDisableDimension.ts     json-patch dataDimension=false
   components/
-    SqlViewNotice.jsx          create / update prompts and errors
-    UsageTable.jsx             DataTable with sort + type filter
-    TypeFilter.jsx
-    DisableDialog.jsx          confirmation Modal + json-patch mutation
-    RemoveViewDialog.jsx       confirmation Modal + delete mutation
-    Intro.jsx                  the explanatory text (moved from index.html)
+    SqlViewNotice.tsx          create / update prompts and errors
+    UsageTable.tsx             DataTable with sort + type filter
+    TypeFilter.tsx
+    DisableDialog.tsx          confirmation Modal
+    RemoveViewDialog.tsx       confirmation Modal
+    Intro.tsx                  the explanatory text (moved from index.html)
+  test-utils/
+    renderWithProvider.tsx     app-runtime Provider + CustomDataProvider wrapper
 ```
+Every module has a co-located `*.test.ts(x)`.
 
 Each module has one job and can be understood from its exports. Pure logic
 (`buildQuery`, row mapping, type mapping) has no React dependency so it is
@@ -135,7 +138,16 @@ FROM summary s CROSS JOIN totals t CROSS JOIN total_favorite_views f
 ORDER BY s.views DESC, s.name;
 ```
 
-Semantics are identical to the current view for categories: `views` counts
+One correction to the current view: `datastatisticsevent.favoriteuid` for a
+`MAP_VIEW` event holds the **map** uid, not the map view (layer) uid, so the
+map branch joins `mapview -> map_mapviews -> map` and uses `map.uid`. The
+current view joins `mapview.uid` and therefore never counts map views.
+Also, the event type filter is widened to
+`VISUALIZATION_VIEW, MAP_VIEW, EVENT_VISUALIZATION_VIEW, EVENT_CHART_VIEW,
+EVENT_REPORT_VIEW` and applied to both the per-favorite counts and the total,
+so numerator and denominator cover the same events.
+
+Semantics are otherwise identical to the current view for categories: `views` counts
 favorite view events in the last 12 months across all favorites that use the
 dimension; `percent` is the share of all dimension views; `percent_of_views`
 is the share of all favorite views. A favorite that uses two dimensions is
@@ -259,9 +271,12 @@ severity-ranked report.
 - Branch `app-platform-migration` from `origin/main`. First commit is the
   CI workflow swap that was pending locally (done). History stays linear.
 - `package.json`: name `data-dimension-disabler`, version `1.0.0`, App
-  Platform scripts (`start`, `build`, `test`, `lint`), `d2.config.js` with
-  `type: app`, title "Data Dimension Disabler", icons carried over. The
-  current manifest has no app id, so none is added.
+  Platform scripts (`start`, `build`, `test`, `lint`, `format`), `d2.config.js`
+  with `type: app`, title "Data Dimension Disabler", `minDHIS2Version: '2.40'`.
+  The 96px icon is carried over as `public/dhis2-app-icon.png`. The current
+  manifest has no app id, so none is added. Because the app name changes,
+  DHIS2 treats it as a new app; the CHANGELOG tells admins to uninstall the
+  old "Category dimension disabler".
 - `.github/workflows/ci.yml`: install, `yarn lint`, `yarn test`, `yarn build`,
   upload `build/bundle/*.zip`. `release.yml`: same build, attach
   `build/bundle/*.zip`.
