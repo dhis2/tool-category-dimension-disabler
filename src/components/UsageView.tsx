@@ -22,7 +22,7 @@ export const UsageView = ({ minor, onViewRemoved }: Props) => {
     const [confirmRemove, setConfirmRemove] = useState(false)
     const disableMutation = useDisableDimension()
     const viewMutations = useSqlViewMutations(minor)
-    const { show: showDisabled } = useAlert(
+    const { show: showDisabled, hide: hideDisabled } = useAlert(
         ({ name }: { name: string }) =>
             i18n.t('"{{name}}" is no longer a data dimension', {
                 name,
@@ -60,6 +60,14 @@ export const UsageView = ({ minor, onViewRemoved }: Props) => {
         }
         const ok = await disableMutation.disable(rowToDisable)
         if (ok) {
+            // useAlert keeps the id of the alert it last raised in a ref and
+            // reuses it while that alert is still on screen, so a second
+            // show() in quick succession would silently replace the first
+            // message instead of raising a new one (and inherit its
+            // almost-expired auto-hide timer). hide() removes the current
+            // alert and clears the ref, so the next show() always allocates
+            // a fresh id.
+            hideDisabled()
             showDisabled({ name: rowToDisable.name })
             setRowToDisable(null)
             refetch()

@@ -76,6 +76,114 @@ describe('UsageView', () => {
         ).toBeInTheDocument()
     })
 
+    it('shows a fresh success alert for each of two disables done in quick succession', async () => {
+        // Regression test for M1: useAlert() keeps the id of the alert it
+        // last raised in a ref and reuses it while that alert is still on
+        // screen. In the real app that means the second AlertBar is never
+        // remounted, so it inherits the first alert's almost-expired
+        // auto-hide timer and disappears immediately - but MockAlertStack
+        // has no timer at all, so that part of the bug can't be observed
+        // through it: with or without the fix, only the latest message is
+        // present after the second disable (the fix's hide() call removes
+        // the first entry; the bug's id reuse just overwrites it in place).
+        // What MockAlertStack *can* show is the mechanism: whether the
+        // second alert got a fresh id (fixed) or reused the first one
+        // (buggy, and the actual root cause of the disappearing toast). So
+        // this test checks both: the second message is shown, and its
+        // `data-alert-id` differs from the first alert's - i.e. it is a new
+        // alert, not the first one silently overwritten.
+        const user = userEvent.setup()
+        const threeRowGrid = {
+            ...grid,
+            rows: [
+                ...grid.rows,
+                ['ORGUNIT_GROUP_SET', 'ougs1', 'Facility Type', 0, 0, 0],
+            ],
+        }
+        let calls = 0
+        const data = {
+            [`sqlViews/${SQL_VIEW_ID}/data`]: jest.fn(async () => {
+                calls += 1
+                if (calls === 1) {
+                    return { listGrid: threeRowGrid }
+                }
+                if (calls === 2) {
+                    return {
+                        listGrid: {
+                            ...threeRowGrid,
+                            rows: threeRowGrid.rows.filter(
+                                (row) => row[2] !== 'Diseases'
+                            ),
+                        },
+                    }
+                }
+                return {
+                    listGrid: {
+                        ...threeRowGrid,
+                        rows: threeRowGrid.rows.filter(
+                            (row) => row[2] === 'Facility Type'
+                        ),
+                    },
+                }
+            }),
+            dataElementGroupSets: jest.fn(async () => ({ status: 'OK' })),
+            categories: jest.fn(async () => ({ status: 'OK' })),
+        }
+        renderWithProvider(
+            <UsageView minor={43} onViewRemoved={jest.fn()} />,
+            data
+        )
+
+        const disableRow = async (name: string) => {
+            await screen.findByText(name)
+            const row = screen
+                .getAllByTestId('usage-row')
+                .find(
+                    (candidate) =>
+                        within(candidate).getByTestId('usage-row-name')
+                            .textContent === name
+                )
+            await user.click(
+                within(row as HTMLElement).getByRole('button', {
+                    name: 'Disable',
+                })
+            )
+            await user.click(
+                within(screen.getByTestId('disable-dialog')).getByRole(
+                    'button',
+                    { name: 'Disable' }
+                )
+            )
+            await waitFor(() =>
+                expect(
+                    screen.queryByTestId('disable-dialog')
+                ).not.toBeInTheDocument()
+            )
+        }
+
+        await disableRow('Diseases')
+        const firstAlert = screen.getByText(
+            '"Diseases" is no longer a data dimension'
+        )
+        const firstAlertId = firstAlert.getAttribute('data-alert-id')
+
+        await disableRow('Gender')
+        const secondAlert = await screen.findByText(
+            '"Gender" is no longer a data dimension'
+        )
+        const secondAlertId = secondAlert.getAttribute('data-alert-id')
+
+        // The fix removes the previous alert before raising the new one, so
+        // the first message does not linger once the second has been shown...
+        expect(
+            screen.queryByText('"Diseases" is no longer a data dimension')
+        ).not.toBeInTheDocument()
+        // ...and, crucially, the second alert is a genuinely new one, not
+        // the first alert's id reused with an overwritten message (the bug).
+        expect(secondAlertId).not.toBeNull()
+        expect(secondAlertId).not.toBe(firstAlertId)
+    })
+
     it('removes the view after confirmation and notifies the parent', async () => {
         const user = userEvent.setup()
         const onViewRemoved = jest.fn()
