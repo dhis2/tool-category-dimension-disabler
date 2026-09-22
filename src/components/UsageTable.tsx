@@ -36,6 +36,13 @@ type ColumnDef = {
     align?: 'left' | 'right'
 }
 
+// Numeric columns start descending (most-viewed first, this tool's
+// purpose); text columns start ascending.
+const NUMERIC_COLUMNS: SortColumn[] = ['views', 'percent', 'percentOfViews']
+
+const defaultDirectionFor = (column: SortColumn): SortDirection =>
+    NUMERIC_COLUMNS.includes(column) ? 'desc' : 'asc'
+
 const COLUMNS: ColumnDef[] = [
     { column: 'type', label: () => i18n.t('Type') },
     { column: 'name', label: () => i18n.t('Name') },
@@ -80,9 +87,11 @@ export const UsageTable = ({ rows, onDisable }: Props) => {
         setSort((current) => ({
             column,
             direction:
-                current.column === column && current.direction === 'asc'
-                    ? 'desc'
-                    : 'asc',
+                current.column === column
+                    ? current.direction === 'asc'
+                        ? 'desc'
+                        : 'asc'
+                    : defaultDirectionFor(column),
         }))
 
     const countLabel =

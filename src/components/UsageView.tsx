@@ -12,7 +12,7 @@ import { UsageTable } from './UsageTable'
 import classes from './UsageView.module.css'
 
 type Props = {
-    minor: number
+    minor: number | undefined
     onViewRemoved: () => void
 }
 

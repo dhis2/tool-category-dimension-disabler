@@ -50,5 +50,13 @@ export const useEngineMutation = () => {
         setState({ loading: pendingCalls.current > 0 })
     }, [])
 
-    return { run, state, reset }
+    // For a call that fails a precondition before it can build a mutation
+    // (e.g. an unknown server version), without going through `engine.mutate`.
+    // Reports the error the same way a failed `run` would and resolves false.
+    const fail = useCallback((error: FetchError): boolean => {
+        setState({ loading: pendingCalls.current > 0, error })
+        return false
+    }, [])
+
+    return { run, state, reset, fail }
 }

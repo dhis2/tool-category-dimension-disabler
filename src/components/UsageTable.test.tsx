@@ -73,6 +73,14 @@ describe('UsageTable', () => {
         expect(bodyRowNames()).toEqual(['Gender', 'Facility Type', 'Age'])
     })
 
+    it('sorts a numeric column descending on the first click (most-viewed first)', async () => {
+        const user = userEvent.setup()
+        renderWithProvider(<UsageTable rows={rows} onDisable={jest.fn()} />)
+        const percentHeader = screen.getByTestId('usage-header-percent')
+        await user.click(within(percentHeader).getByRole('button'))
+        expect(bodyRowNames()).toEqual(['Gender', 'Facility Type', 'Age'])
+    })
+
     it('calls onDisable with the row', async () => {
         const user = userEvent.setup()
         const onDisable = jest.fn()

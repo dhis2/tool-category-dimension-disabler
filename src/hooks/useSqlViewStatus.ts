@@ -78,8 +78,8 @@ export const useSqlViewStatus = () => {
         refetch,
         // Only consumed to build a query (READY/OUTDATED, and MISSING's
         // "Create SQL view") once the real minor is known - if it weren't,
-        // status is ERROR and neither of those is reachable. This fallback
-        // just keeps the return type a plain number.
-        minor: minor ?? 0,
+        // status is ERROR and neither of those is reachable, so callers
+        // never see `undefined` in practice.
+        minor,
     }
 }
