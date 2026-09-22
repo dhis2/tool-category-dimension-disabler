@@ -113,7 +113,11 @@ new dump was needed: the table/column dumps below already show it.
   are rejected; `'user'`, `'usergroup'`, `'userGroups'`, `'useraccess'`,
   `'usergroupaccess'`, `'sharing'`, `'map'` and `'category'` are all fine, as
   is the split spelling `'user' || 's'`. Reading `sharing->'users'` therefore
-  has to avoid the bare literal.
+  has to avoid the bare literal. `buildQuery.ts` accordingly emits
+  `f.sharing->('user'||'s')`, and `buildQuery.test.ts` asserts the generated
+  query never matches `\busers\b`. This was not theoretical: the first
+  version of the query, verified with `psql` only, installed fine and then
+  failed with E4310 on every read of `/api/sqlViews/GOLswS44mh8/data`.
 
 ## Raw output
 

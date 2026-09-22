@@ -84,11 +84,14 @@ describe('buildQuery', () => {
             3 * 3 + 1
         )
         expect(sql).toContain(
-            "jsonb_typeof(f.sharing->'users') = 'object' AND f.sharing->'users' <> '{}'::jsonb"
+            "jsonb_typeof(f.sharing->('user'||'s')) = 'object' AND f.sharing->('user'||'s') <> '{}'::jsonb"
         )
         expect(sql).toContain(
             "jsonb_typeof(f.sharing->'userGroups') = 'object' AND f.sharing->'userGroups' <> '{}'::jsonb"
         )
+        // DHIS2 answers 409 E4310 for a SQL view whose text contains a
+        // protected table name, even as a JSON key in a string literal.
+        expect(sql).not.toMatch(/\busers\b/)
     })
 
     it('counts favorites once per dimension and splits them by sharing class', () => {

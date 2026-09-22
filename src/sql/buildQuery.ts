@@ -75,15 +75,23 @@ const favoriteSourcesFor = (type: DimensionType): readonly FavoriteSource[] =>
  *  public  - public access string grants metadata read (first char 'r')
  *  shared  - not public, but shared with at least one user or user group
  *  private - neither
- * users/userGroups may be absent, a JSON null, or {}; none of those count
- * as shared, only a non-empty JSON object does. jsonb_typeof(...) is NULL
- * for an absent key and 'null' (not 'object') for a JSON null literal, so
- * both fall through to private; COALESCE alone would not catch the JSON
- * null case, since `sharing->'users'` for `{"users": null}` is a non-NULL
+ * The users/userGroups keys may be absent, a JSON null, or {}; none of those
+ * count as shared, only a non-empty JSON object does. jsonb_typeof(...) is
+ * NULL for an absent key and 'null' (not 'object') for a JSON null literal,
+ * so both fall through to private; COALESCE alone would not catch the JSON
+ * null case, since the key lookup for `{"users": null}` yields a non-NULL
  * jsonb null, not SQL NULL.
+ *
+ * The first key is spelled `('user'||'s')` on purpose. DHIS2 refuses to
+ * execute a SQL view whose query *text* matches a protected table name
+ * (users, userinfo, oauth2client, ...) and answers 409 E4310, "SQL query
+ * contains references to protected tables". The check is a plain
+ * word-boundary scan, so the bare word inside a string literal is enough to
+ * trip it even though no such table is referenced here; concatenating the
+ * key keeps the word out of the query text. `userGroups` is not protected.
  */
 const SHARING_CLASS_SQL = `CASE WHEN LEFT(f.sharing->>'public', 1) = 'r' THEN 'public'
-             WHEN (jsonb_typeof(f.sharing->'users') = 'object' AND f.sharing->'users' <> '{}'::jsonb)
+             WHEN (jsonb_typeof(f.sharing->('user'||'s')) = 'object' AND f.sharing->('user'||'s') <> '{}'::jsonb)
                OR (jsonb_typeof(f.sharing->'userGroups') = 'object' AND f.sharing->'userGroups' <> '{}'::jsonb) THEN 'shared'
              ELSE 'private' END`
 

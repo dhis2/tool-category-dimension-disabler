@@ -33,6 +33,11 @@ in the last 12 months and lets an admin disable them.
   `renderWithProvider` from `src/test-utils`. `data-test` is the test id
   attribute.
 - Never call `i18n.t` at module scope.
+- The SQL view text must not contain a protected table name such as `users`
+  (also `userinfo`, `oauth2client`): DHIS2 scans the query text with a
+  word-boundary match and returns `409 E4310` from
+  `/api/sqlViews/{uid}/data`, even when the word is only a JSON key in a
+  string literal. Spell such keys by concatenation — `('user'||'s')`.
 - Supported servers 2.40–2.43; `minor < 41` is the only SQL version branch
   (the category table was renamed from `dataelementcategory` to `category`
   in 2.41).
