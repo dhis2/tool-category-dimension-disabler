@@ -3,7 +3,7 @@ import { buildSqlViewDefinition, SQL_VIEW_ID } from '../sql/sqlView'
 import { useEngineMutation } from './useEngineMutation'
 
 export const useSqlViewMutations = (minor: number) => {
-    const { run, state } = useEngineMutation()
+    const { run, state, reset } = useEngineMutation()
 
     const create = useCallback(
         () =>
@@ -32,5 +32,5 @@ export const useSqlViewMutations = (minor: number) => {
         [run]
     )
 
-    return { create, update, remove, state }
+    return { create, update, remove, state, reset }
 }

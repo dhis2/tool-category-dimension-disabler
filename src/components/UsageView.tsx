@@ -31,6 +31,29 @@ export const UsageView = ({ minor, onViewRemoved }: Props) => {
         { success: true }
     )
 
+    // Reset the mutation's error/loading state whenever a dialog is opened
+    // or dismissed, so a failure from a previous row/attempt doesn't linger
+    // and show up again when the dialog is reopened for something else.
+    const openDisableDialog = (row: UsageRow) => {
+        disableMutation.reset()
+        setRowToDisable(row)
+    }
+
+    const cancelDisableDialog = () => {
+        disableMutation.reset()
+        setRowToDisable(null)
+    }
+
+    const openRemoveDialog = () => {
+        viewMutations.reset()
+        setConfirmRemove(true)
+    }
+
+    const cancelRemoveDialog = () => {
+        viewMutations.reset()
+        setConfirmRemove(false)
+    }
+
     const confirmDisable = async () => {
         if (!rowToDisable) {
             return
@@ -75,11 +98,11 @@ export const UsageView = ({ minor, onViewRemoved }: Props) => {
                 </NoticeBox>
             )}
             {!loading && !error && (
-                <UsageTable rows={rows} onDisable={setRowToDisable} />
+                <UsageTable rows={rows} onDisable={openDisableDialog} />
             )}
 
             <div className={classes.footer}>
-                <Button secondary small onClick={() => setConfirmRemove(true)}>
+                <Button secondary small onClick={openRemoveDialog}>
                     {i18n.t('Remove SQL view')}
                 </Button>
             </div>
@@ -90,7 +113,7 @@ export const UsageView = ({ minor, onViewRemoved }: Props) => {
                     loading={disableMutation.state.loading}
                     error={disableMutation.state.error}
                     onConfirm={confirmDisable}
-                    onCancel={() => setRowToDisable(null)}
+                    onCancel={cancelDisableDialog}
                 />
             )}
             {confirmRemove && (
@@ -98,7 +121,7 @@ export const UsageView = ({ minor, onViewRemoved }: Props) => {
                     loading={viewMutations.state.loading}
                     error={viewMutations.state.error}
                     onConfirm={confirmRemoveView}
-                    onCancel={() => setConfirmRemove(false)}
+                    onCancel={cancelRemoveDialog}
                 />
             )}
         </div>

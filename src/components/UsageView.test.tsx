@@ -129,4 +129,62 @@ describe('UsageView', () => {
         ).toBeInTheDocument()
         consoleError.mockRestore()
     })
+
+    it('clears a stale mutation error when the dialog is reopened for another row', async () => {
+        const user = userEvent.setup()
+        const categories = jest.fn(() => {
+            throw new Error('409 Conflict')
+        })
+        const data = {
+            [`sqlViews/${SQL_VIEW_ID}/data`]: async () => ({ listGrid: grid }),
+            categories,
+        }
+        renderWithProvider(
+            <UsageView minor={43} onViewRemoved={jest.fn()} />,
+            data
+        )
+
+        await screen.findByText('Gender')
+        const genderRow = screen
+            .getAllByTestId('usage-row')
+            .find(
+                (row) =>
+                    within(row).getByTestId('usage-row-name').textContent ===
+                    'Gender'
+            )
+        await user.click(
+            within(genderRow as HTMLElement).getByRole('button', {
+                name: 'Disable',
+            })
+        )
+        await user.click(
+            within(screen.getByTestId('disable-dialog')).getByRole('button', {
+                name: 'Disable',
+            })
+        )
+
+        const dialog = await screen.findByTestId('disable-dialog')
+        expect(within(dialog).getByText(/409 Conflict/)).toBeInTheDocument()
+
+        await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+        expect(screen.queryByTestId('disable-dialog')).not.toBeInTheDocument()
+
+        const diseasesRow = screen
+            .getAllByTestId('usage-row')
+            .find(
+                (row) =>
+                    within(row).getByTestId('usage-row-name').textContent ===
+                    'Diseases'
+            )
+        await user.click(
+            within(diseasesRow as HTMLElement).getByRole('button', {
+                name: 'Disable',
+            })
+        )
+
+        const reopenedDialog = await screen.findByTestId('disable-dialog')
+        expect(
+            within(reopenedDialog).queryByText(/409 Conflict/)
+        ).not.toBeInTheDocument()
+    })
 })

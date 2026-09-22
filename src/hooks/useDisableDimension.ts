@@ -6,7 +6,7 @@ import type { UsageRow } from './useUsageData'
 const DISABLE_PATCH = [{ op: 'add', path: '/dataDimension', value: false }]
 
 export const useDisableDimension = () => {
-    const { run, state } = useEngineMutation()
+    const { run, state, reset } = useEngineMutation()
 
     const disable = useCallback(
         (row: UsageRow) =>
@@ -20,5 +20,5 @@ export const useDisableDimension = () => {
         [run]
     )
 
-    return { disable, state }
+    return { disable, state, reset }
 }
