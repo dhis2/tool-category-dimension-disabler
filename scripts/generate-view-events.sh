@@ -3,7 +3,7 @@
 # non-trivial when testing. Usage:
 #   scripts/generate-view-events.sh http://dhis2-agent-cdd-sl43:8080 admin:district
 # Records N views per favorite, where N decreases along the list, for the
-# first 5 visualizations, 3 maps and 5 event visualizations that actually use
+# first 5 visualizations, 3 maps and 3 event visualizations that actually use
 # at least one of the four dimension types this app ranks -- a favorite that
 # uses none of them would only ever contribute 0 views, which defeats the
 # point of seeding data.

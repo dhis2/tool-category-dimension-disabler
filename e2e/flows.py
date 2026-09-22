@@ -4,6 +4,8 @@ Flows are ordered: the suite starts with no SQL view installed and ends with
 the view installed again and every dimension re-enabled.
 """
 
+import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -45,7 +47,7 @@ TYPE_ENDPOINTS = {
 
 LIMITED_ROLE_NAME = "cdd-e2e-app-only"
 LIMITED_USERNAME = "cdde2elimited"
-LIMITED_PASSWORD = "Limited123!"
+LIMITED_PASSWORD = os.environ.get("DHIS2_LIMITED_PASSWORD", "Limited123!")
 SQL_VIEW_AUTHORITY_TEXT = "Add/Update SQL view"
 # The limited role needs an authority the acting user can actually grant.
 PREFERRED_LIMITED_AUTHORITIES = ("F_SQLVIEW_EXECUTE", "F_DATAVALUE_ADD")
@@ -183,10 +185,12 @@ def _compare_table_with_api(frame, api_rows):
     )
 
     label = ui.count_label(frame)
+    label_match = re.match(r"^(\d+) enabled dimension", label)
+    label_count = int(label_match.group(1)) if label_match else None
     results.append(
         (
             "Row count label matches the rows shown",
-            PASS if str(len(dom_rows)) in label else FAIL,
+            PASS if label_count == len(dom_rows) else FAIL,
             label,
         )
     )

@@ -28,15 +28,16 @@ credential is hard-coded, so the same run works on any version from 2.40 up.
 DHIS2_URL=http://dhis2-example:8080 python3 e2e/run_suite.py
 ```
 
-| Variable                          | Default              | Meaning                                                                  |
-| --------------------------------- | -------------------- | ------------------------------------------------------------------------ |
-| `DHIS2_URL`                       | _(required)_         | Instance base URL                                                        |
-| `DHIS2_USER` / `DHIS2_PASS`       | `admin` / `district` | Account the app is driven as                                             |
-| `E2E_LABEL`                       | server version       | Label in results and screenshot names                                    |
-| `E2E_OUT_DIR`                     | `e2e/results`        | Screenshots + `results-<label>.{json,md}`                                |
-| `E2E_FLOWS`                       | all                  | Comma-separated flow ids to run                                          |
-| `E2E_HEADED`                      | –                    | `1` to watch the browser                                                 |
-| `E2E_SUPERUSER` / `E2E_SUPERPASS` | –                    | ALL-authority account used **only** to create the throwaway limited user |
+| Variable                          | Default              | Meaning                                                                        |
+| --------------------------------- | -------------------- | ------------------------------------------------------------------------------ |
+| `DHIS2_URL`                       | _(required)_         | Instance base URL                                                              |
+| `DHIS2_USER` / `DHIS2_PASS`       | `admin` / `district` | Account the app is driven as                                                   |
+| `E2E_LABEL`                       | server version       | Label in results and screenshot names                                          |
+| `E2E_OUT_DIR`                     | `e2e/results`        | Screenshots + `results-<label>.{json,md}`                                      |
+| `E2E_FLOWS`                       | all                  | Comma-separated flow ids to run                                                |
+| `E2E_HEADED`                      | –                    | `1` to watch the browser                                                       |
+| `E2E_SUPERUSER` / `E2E_SUPERPASS` | –                    | ALL-authority account used **only** to create the throwaway limited user       |
+| `DHIS2_LIMITED_PASSWORD`          | `Limited123!`        | Password set on the throwaway limited user created for the `limited-user` flow |
 
 `E2E_SUPERUSER` is needed on the DHIS2 demo databases: their `admin` has
 neither `ALL` nor the generated `M_<app>` authority, so it cannot grant a role
@@ -73,14 +74,48 @@ message on plain http, the shell's optional `staticContent/logo_banner` and
 `dataStore/custom-translations` 404s, and the expected 404 while the view is
 missing) is filtered in `app_driver.BENIGN_CONSOLE` / `BENIGN_HTTP_404`.
 
-## Known failing step
+## Known test-oracle gaps
 
-`disable-per-type / Success alert names the disabled object` fails for the
-second and fourth disable on every version tested. That is finding **M1** in
-`docs/review-2026-09-21/REVIEW-FINDINGS.md`, not a flaky test: `useAlert`
-reuses one alert slot, so a second toast raised within the first one's 8 s
-auto-hide window inherits the expiring timer and disappears immediately. The
-step should pass once M1 is fixed.
+Two findings from `docs/review-2026-09-21/REVIEW-FINDINGS.md` are gaps in
+this suite's own oracles, not app defects:
+
+- **L9.** `e2e/flows.py`'s `restore-view` step assumes a notice box is
+  always present — test-suite-only, not an app defect. `flow_restore_view`
+  (`e2e/flows.py`) calls `ui.notice_title(frame)`, which waits for
+  `NOTICE_BOX` to become visible, then only acts if its text contains
+  `MISSING_NOTICE`. In the normal full run this works because the preceding
+  `limited-user` step (`_ensure_limited_user` / `flow_limited_user`) always
+  deletes the SQL view before returning, so `restore-view` reliably finds
+  the MISSING notice and recreates the view. When `limited-user` is
+  excluded from `E2E_FLOWS` and the preceding `outdated-update` step
+  already leaves the view installed and `READY`, `restore-view` opens the
+  app straight to the usage table — no notice box ever appears — and
+  `notice_title()` times out, raising an exception that is reported as a
+  suite FAIL. Fix (test suite, not app code): have `flow_restore_view`
+  check whether the table is already rendered before waiting for a notice
+  box, e.g. `if frame.locator(ui.USAGE_TABLE).count() > 0: return PASS`
+  short-circuit, or document that `limited-user` must run whenever
+  `restore-view` does.
+- **L10.** `e2e/flows.py`'s name-sort assertion is not locale-aware, unlike
+  the app it is testing — test-suite-only, not an app defect.
+  `_sort_checks` (`e2e/flows.py:240-251`) computes the expected
+  ascending/descending order with Python's `sorted(names, key=str.lower)`,
+  i.e. plain code-point comparison after lowercasing. The app itself sorts
+  with `a.localeCompare(b, undefined, { sensitivity: 'base' })`
+  (`src/components/usageTableUtils.ts:10`), which is correct — ICU
+  collation, not naive code-point order, is the right choice for a name
+  column. The two orderings usually agree, but seeds with names built from
+  `<`, `(`, `,`, and digits expose the gap (verified directly in Node, the
+  same V8/ICU engine Chromium uses: `"Age(<1 Yr, 50+Yrs)".localeCompare(
+"Age(0-4Yrs,25-49Yrs,50+Yrs)", undefined, {sensitivity: "base"})` returns
+  `-1`, i.e. the app's displayed order is the _correct_ `localeCompare`
+  order; the suite's Python comparator is simply the wrong oracle for that
+  data). Fix (test suite, not app code): reimplement the expected order
+  with the same comparator the app uses — either compare through a
+  headless JS `localeCompare` call (e.g. via `page.evaluate`) instead of
+  Python's `sorted`, or drop the strict-order assertion in favour of a
+  weaker check (e.g. "every adjacent pair compares as ≤ under the same rule
+  the row values were shown in").
 
 ## Files
 

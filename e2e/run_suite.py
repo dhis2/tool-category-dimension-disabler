@@ -38,7 +38,7 @@ import flows  # noqa: E402
 from dhis2_api import Dhis2Client, hostname_of  # noqa: E402
 
 DEFAULT_USER = "admin"
-DEFAULT_PASSWORD = "district"
+DEFAULT_PASSWORD = os.environ.get("DHIS2_PASS", "district")
 VIEWPORT = {"width": 1400, "height": 1000}
 BROWSER_ARGS = ["--no-sandbox", "--disable-dev-shm-usage"]
 

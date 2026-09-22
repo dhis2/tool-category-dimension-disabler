@@ -13,7 +13,7 @@ in the last 12 months and lets an admin disable them.
 - `src/sql/sqlView.ts` — view UID `GOLswS44mh8` (kept from the original
   category-only app so installs upgrade in place), name, sharing, outdated
   check.
-- `src/hooks/*` — status (MISSING/OUTDATED/READY/ERROR), usage data,
+- `src/hooks/*` — status (LOADING/MISSING/OUTDATED/READY/ERROR), usage data,
   mutations. Mutations call `engine.mutate` directly (`useEngineMutation`)
   because the resource varies per call; it exposes `run`, `state` and
   `reset` (`reset` clears a stale mutation error when a dialog is opened for

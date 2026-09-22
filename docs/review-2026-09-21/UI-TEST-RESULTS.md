@@ -17,6 +17,9 @@ favorites). Only functional checks 1, 3, 4, 6, 7, 8 and 9 were run on
 was covered on 2.41.10, check 5 on 2.43.1 Sierra Leone, per the review
 plan); see "2.42.6-specific notes" and "2.43.1 Laos-specific notes" below.
 
+Only the main table screenshot per instance is kept in the repository; the
+full set (51 files) was delivered to the maintainer separately.
+
 ## Instances
 
 | Label | URL | DHIS2 version | Source |
@@ -65,7 +68,7 @@ data, not a defect.
 
 | Step | 2.40.12 | 2.41.10 | 2.42.6 | 2.43.1 | 2.43 Laos | Notes |
 |---|---|---|---|---|---|---|
-| Fresh load shows the "SQL view not installed" notice | PASS | PASS | PASS | PASS | PASS | screenshots `*-01-missing-notice.png` |
+| Fresh load shows the "SQL view not installed" notice | PASS | PASS | PASS | PASS | PASS | |
 | Exactly one header bar renders | PASS | PASS | PASS | PASS | PASS | 2.40/2.41 top level; 2.42/2.43 (both seeds) inside the global-shell iframe, the app's own header hidden by the shell — no double header |
 | Create SQL view yields the usage table | PASS | PASS | PASS | PASS | PASS | `*-02-table.png` |
 | Created view has the expected name and `r-r-----` sharing | PASS | PASS | PASS | PASS | PASS | `name='Data dimension usage'` |
@@ -78,24 +81,24 @@ data, not a defect.
 | Filter "Category" | PASS (12) | PASS (62) | PASS (110) | PASS (12) | PASS (60) | |
 | Filter "Organisation unit group set" | PASS (4) | PASS (7) | PASS (8) | PASS (4) | PASS (20) | |
 | Filter "Data element group set" | PASS (5) | PASS (1) | PASS (0) | PASS (5) | PASS (0) | Laos: 0 rows shown, 0 expected — correct, seed has no objects of this type |
-| Filter "Category option group set" | PASS (2) | PASS (0) | PASS (0) | PASS (2) | PASS (40) | `*-03-filter.png`; 2.41/2.42: 0 rows shown, 0 expected — correct, neither seed has any object of this type |
-| Sort by name, ascending / descending | PASS | PASS | **FAIL** | PASS | **FAIL** | `*-04-sorted.png`. 2.42 and 2.43 Laos: finding **L10** — the on-screen order is the correct `localeCompare` order; the suite's Python `sorted(key=str.lower)` oracle disagrees on a handful of rows whose names contain `<`, `(`, `,` and digits (2.42: 14/118 rows; Laos: 6/120 rows, e.g. `"Age (0-59,60+)"` vs `"Age (<1- 30+ years)"`), confirmed by reproducing the same comparison in Node (same engine Chromium uses) — 0 mismatches once the two orderings are compared with a locale-aware comparator |
+| Filter "Category option group set" | PASS (2) | PASS (0) | PASS (0) | PASS (2) | PASS (40) | 2.41/2.42: 0 rows shown, 0 expected — correct, neither seed has any object of this type |
+| Sort by name, ascending / descending | PASS | PASS | **FAIL** | PASS | **FAIL** | 2.42 and 2.43 Laos: finding **L10** — the on-screen order is the correct `localeCompare` order; the suite's Python `sorted(key=str.lower)` oracle disagrees on a handful of rows whose names contain `<`, `(`, `,` and digits (2.42: 14/118 rows; Laos: 6/120 rows, e.g. `"Age (0-59,60+)"` vs `"Age (<1- 30+ years)"`), confirmed by reproducing the same comparison in Node (same engine Chromium uses) — 0 mismatches once the two orderings are compared with a locale-aware comparator |
 | Sort by views, ascending / descending | PASS | PASS | PASS | PASS | PASS | 2.40 top: 15/8/7; 2.41 top: 13/11/9; 2.42 top: 15/12/6; 2.43 top: 30/20/7; 2.43 Laos top: 42/6/2 |
-| Disable dialog names the object and its type (all four types) | PASS | PASS (3 of 4) | PASS (2 of 2) | PASS | PASS (3 of 3) | `*-06-disable-dialog.png`; 2.41: Category option group set **SKIPPED** (no enabled object of that type exists to disable); 2.42: Data element group set and Category option group set **SKIPPED** (neither type has any object at all on this seed); 2.43 Laos: Data element group set **SKIPPED** (no objects of that type exist at all on this seed) |
-| Row disappears after confirming (all four types) | PASS | PASS (3 of 4) | PASS (2 of 2) | PASS | PASS (3 of 3) | `*-05-after-disable.png`; 2.41/2.42/Laos: same skips as above |
+| Disable dialog names the object and its type (all four types) | PASS | PASS (3 of 4) | PASS (2 of 2) | PASS | PASS (3 of 3) | 2.41: Category option group set **SKIPPED** (no enabled object of that type exists to disable); 2.42: Data element group set and Category option group set **SKIPPED** (neither type has any object at all on this seed); 2.43 Laos: Data element group set **SKIPPED** (no objects of that type exist at all on this seed) |
+| Row disappears after confirming (all four types) | PASS | PASS (3 of 4) | PASS (2 of 2) | PASS | PASS (3 of 3) | 2.41/2.42/Laos: same skips as above |
 | Server reports `dataDimension=false` (all four types) | PASS | PASS (3 of 4) | PASS (2 of 2) | PASS | PASS (3 of 3) | verified per type via `GET /api/<resource>/<uid>?fields=dataDimension`; 2.41/2.42/Laos: same skips as above |
 | Success alert names the disabled object | **FAIL (2 of 4)** | **PASS (3 of 3 disabled)** | **PASS (2 of 2 disabled)** | **FAIL (2 of 4)** | **PASS (3 of 3 disabled)** | finding **M1**, fixed in `2c997df`. 2.41 disabled Category, Org unit group set, and Data element group set in succession — all three toasts appeared. 2.42 disabled Category then Organisation unit group set — both toasts appeared. 2.43 Laos disabled Category ("AFI - Screening form age group"), Organisation unit group set ("50 Districts of EPI (P-DLI8)") and Category option group set ("Age (0-59,60+)") in succession — **all three toasts appeared**, re-confirming the fix on the fifth and final instance |
 | Re-enable each disabled dimension (cleanup) | PASS | PASS | PASS | PASS | PASS | JSON Patch `value: true`, verified by read-back |
-| Remove SQL view returns to the create notice | PASS | PASS | PASS | PASS | PASS | view really deleted (`404`), `*-07-removed.png` |
+| Remove SQL view returns to the create notice | PASS | PASS | PASS | PASS | PASS | view really deleted (`404`) |
 | Creating the view again restores the table | PASS | PASS | PASS | PASS | PASS | |
-| Data-read error (409 E4312) shows the server message | PASS | **FAIL** | **FAIL** | PASS | **FAIL** | `*-11-data-error.png` (2.42/Laos screenshots instead show the table — the error state is never reached). **Not an app bug — instance limitation**: on this EMIS seed, `admin` (and the broker's `local_admin`) both hold the `Superuser` role with `ALL`, and `admin` is also the SQL view's owner; DHIS2 grants owners/superusers full access regardless of `sharing.public`, so setting `public: r-------` has no effect when driven as either account and `/data` keeps answering 200. Unlike the Sierra Leone seeds' limited demo `admin`, no standard account on this instance can be denied data read. Confirmed by `GET /api/me` as both `admin` and `local_admin`: both report `authorities: ["ALL"]`. 2.42/Laos: same root cause — `admin` rejects Basic auth outright on both seeds (401), and the only usable account, `local_admin`, also holds `ALL`. Because the flow raised an exception before its own cleanup step, it left the view's sharing at `r-------` on all three; restored to `r-r-----` by hand and verified on each (see STATE-CHANGES.md) |
+| Data-read error (409 E4312) shows the server message | PASS | **FAIL** | **FAIL** | PASS | **FAIL** | 2.42/Laos screenshots instead show the table — the error state is never reached. **Not an app bug — instance limitation**: on this EMIS seed, `admin` (and the broker's `local_admin`) both hold the `Superuser` role with `ALL`, and `admin` is also the SQL view's owner; DHIS2 grants owners/superusers full access regardless of `sharing.public`, so setting `public: r-------` has no effect when driven as either account and `/data` keeps answering 200. Unlike the Sierra Leone seeds' limited demo `admin`, no standard account on this instance can be denied data read. Confirmed by `GET /api/me` as both `admin` and `local_admin`: both report `authorities: ["ALL"]`. 2.42/Laos: same root cause — `admin` rejects Basic auth outright on both seeds (401), and the only usable account, `local_admin`, also holds `ALL`. Because the flow raised an exception before its own cleanup step, it left the view's sharing at `r-------` on all three; restored to `r-r-----` by hand and verified on each (see STATE-CHANGES.md) |
 | "Remove SQL view" stays available in the error state | PASS | N/A | N/A | PASS | N/A | not reached — the error state above never occurs on this instance |
 | Retry loads the table once access is restored | PASS | N/A | N/A | PASS | N/A | not reached, same reason |
-| Legacy category-only view detected as outdated | PASS | PASS | N/A | PASS | N/A | `*-08-outdated-notice.png`. 2.41 verified with **two** legacy definitions: the suite's synthetic one (`legacy_sql_view.py`) during the automated run, and separately, by hand, the actual historical `sql_view_41` object from `git show 7b8c7e1:src/app.js` (Task 14 step 4) — screenshots `2.41-08-outdated-notice-legacy-appjs.png` / `2.41-09-after-update-legacy-appjs.png`. 2.42/Laos: check 2 not run per review plan (already covered on 2.41.10 and, in pass A, on 2.43.1 Sierra Leone) |
+| Legacy category-only view detected as outdated | PASS | PASS | N/A | PASS | N/A | 2.41 verified with **two** legacy definitions: the suite's synthetic one (`legacy_sql_view.py`) during the automated run, and separately, by hand, the actual historical `sql_view_41` object from `git show 7b8c7e1:src/app.js` (Task 14 step 4). 2.42/Laos: check 2 not run per review plan (already covered on 2.41.10 and, in pass A, on 2.43.1 Sierra Leone) |
 | Update renames the view in place (same UID) | PASS | PASS | N/A | PASS | N/A | `Category dimension usage` → `Data dimension usage`, UID `GOLswS44mh8` kept |
 | Update sets public sharing to `r-r-----` | PASS | PASS | N/A | PASS | N/A | PUT does change sharing on all versions tested (was `rwrw----`) |
 | User without the SQL view authority: server message shown | PASS | SKIPPED | SKIPPED | PASS | SKIPPED | check 5 skipped on 2.41, 2.42 and Laos per review plan — already verified on 2.43.1 Sierra Leone |
-| …and the "Add/Update SQL view" authority is named | PASS | SKIPPED | SKIPPED | PASS | SKIPPED | `*-10-limited-user.png` |
+| …and the "Add/Update SQL view" authority is named | PASS | SKIPPED | SKIPPED | PASS | SKIPPED | |
 | …and the app does not crash | PASS | SKIPPED | SKIPPED | PASS | SKIPPED | no page errors |
 | SQL view left installed at the end | PASS | PASS | PASS | PASS | PASS | 2.41/2.42/Laos: the suite's own `restore-view` step raised an exception (finding **L9**; see notes below the table) but the view's actual state was verified directly via `GET /api/sqlViews/GOLswS44mh8?fields=name,sharing` → installed, correct name and `r-r-----` sharing on all three |
 | No unexpected console errors | PASS | PASS | PASS | PASS | PASS | |
@@ -395,19 +398,21 @@ platform noise, not app defects:
 
 In `screenshots/`, named `<version>-<step>.png` (2.41.10 uses a short `2.41-`
 prefix; 2.42.6 uses a short `2.42-` prefix; 2.43.1 Laos uses a `2.43-lao-`
-prefix):
+prefix). Only the usage-table screenshot per instance is kept in the
+repository; the full set (51 files) was delivered to the maintainer
+separately.
 
 | Step | 2.40.12 | 2.41.10 | 2.42.6 | 2.43.1 | 2.43.1 Laos |
 |---|---|---|---|---|---|
-| Create notice | `2.40.12-01-missing-notice.png` | `2.41-01-missing-notice.png` | `2.42-01-missing-notice.png` | `2.43.1-01-missing-notice.png` | `2.43-lao-01-missing-notice.png` |
+| Create notice | not kept in repo | not kept in repo | not kept in repo | not kept in repo | not kept in repo |
 | Usage table | `2.40.12-02-table.png` | `2.41-02-table.png` | `2.42-02-table.png` | `2.43.1-02-table.png` | `2.43-lao-02-table.png` |
-| Filtered to one type | `2.40.12-03-filter.png` | `2.41-03-filter.png` | `2.42-03-filter.png` | `2.43.1-03-filter.png` | `2.43-lao-03-filter.png` |
-| Sorted | `2.40.12-04-sorted.png` | `2.41-04-sorted.png` | `2.42-04-sorted.png` | `2.43.1-04-sorted.png` | `2.43-lao-04-sorted.png` |
-| Disable dialog | `2.40.12-06-disable-dialog.png` | `2.41-06-disable-dialog.png` | `2.42-06-disable-dialog.png` | `2.43.1-06-disable-dialog.png` | `2.43-lao-06-disable-dialog.png` |
-| After disabling objects | `2.40.12-05-after-disable.png` | `2.41-05-after-disable.png` (3 objects, not 4 — see notes) | `2.42-05-after-disable.png` (2 objects, not 4 — see notes) | `2.43.1-05-after-disable.png` | `2.43-lao-05-after-disable.png` (3 objects, not 4 — see notes) |
-| View removed | `2.40.12-07-removed.png` | `2.41-07-removed.png` | `2.42-07-removed.png` | `2.43.1-07-removed.png` | `2.43-lao-07-removed.png` |
-| Outdated (legacy) view notice | `2.40.12-08-outdated-notice.png` | `2.41-08-outdated-notice.png` (suite's synthetic legacy view) and `2.41-08-outdated-notice-legacy-appjs.png` (the actual historical `sql_view_41` from `git show 7b8c7e1:src/app.js`) | not captured (check 2 out of scope on this instance) | `2.43.1-08-outdated-notice.png` | not captured (check 2 out of scope on this instance) |
-| After update | `2.40.12-09-after-update.png` | `2.41-09-after-update.png` and `2.41-09-after-update-legacy-appjs.png` | not captured (check 2 out of scope on this instance) | `2.43.1-09-after-update.png` | not captured (check 2 out of scope on this instance) |
-| Limited user, create refused | `2.40.12-10-limited-user.png` | not captured (check 5 skipped on this instance) | not captured (check 5 out of scope on this instance) | `2.43.1-10-limited-user.png` | not captured (check 5 out of scope on this instance) |
-| Data-read error state | `2.40.12-11-data-error.png` | not captured (scenario unreachable on this instance — see notes) | `2.42-11-data-error-limitation.png` (shows the table, not an error — the scenario is unreachable on this instance, see notes) | `2.43.1-11-data-error.png` | `2.43-lao-11-data-error-limitation.png` (shows the table, not an error — the scenario is unreachable on this instance, see notes) |
-| `restore-view` exception (L9 artifact) | n/a | n/a | `2.42-12-restore-view-limitation.png` (shows the table, not a notice box — see notes) | n/a | `2.43-lao-12-restore-view-limitation.png` (shows the table, not a notice box — see notes) |
+| Filtered to one type | not kept in repo | not kept in repo | not kept in repo | not kept in repo | not kept in repo |
+| Sorted | not kept in repo | not kept in repo | not kept in repo | not kept in repo | not kept in repo |
+| Disable dialog | not kept in repo | not kept in repo | not kept in repo | not kept in repo | not kept in repo |
+| After disabling objects | not kept in repo | not kept in repo (3 objects, not 4 — see notes) | not kept in repo (2 objects, not 4 — see notes) | not kept in repo | not kept in repo (3 objects, not 4 — see notes) |
+| View removed | not kept in repo | not kept in repo | not kept in repo | not kept in repo | not kept in repo |
+| Outdated (legacy) view notice | not kept in repo | not kept in repo (suite's synthetic legacy view, and separately the actual historical `sql_view_41` from `git show 7b8c7e1:src/app.js`) | not captured (check 2 out of scope on this instance) | not kept in repo | not captured (check 2 out of scope on this instance) |
+| After update | not kept in repo | not kept in repo (both the suite's synthetic legacy view and the actual historical `sql_view_41`) | not captured (check 2 out of scope on this instance) | not kept in repo | not captured (check 2 out of scope on this instance) |
+| Limited user, create refused | not kept in repo | not captured (check 5 skipped on this instance) | not captured (check 5 out of scope on this instance) | not kept in repo | not captured (check 5 out of scope on this instance) |
+| Data-read error state | not kept in repo | not captured (scenario unreachable on this instance — see notes) | not kept in repo (shows the table, not an error — the scenario is unreachable on this instance, see notes) | not kept in repo | not kept in repo (shows the table, not an error — the scenario is unreachable on this instance, see notes) |
+| `restore-view` exception (L9 artifact) | n/a | n/a | not kept in repo (shows the table, not a notice box — see notes) | n/a | not kept in repo (shows the table, not a notice box — see notes) |
