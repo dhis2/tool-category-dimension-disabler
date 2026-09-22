@@ -20,6 +20,9 @@ All notable changes to this project will be documented in this file.
   view events are recorded against).
 - Event types counted: VISUALIZATION_VIEW, MAP_VIEW, EVENT_VISUALIZATION_VIEW,
   EVENT_CHART_VIEW, EVENT_REPORT_VIEW.
+- The app no longer renders a title of its own — the DHIS2 header bar already
+  names it — and the introduction is shorter and runs the full width of the
+  page, with tighter spacing above the table.
 
 ### Added
 
@@ -28,6 +31,13 @@ All notable changes to this project will be documented in this file.
   are ranked from visualizations only, since no map view or event
   visualization join table exists for them.
 - Type filter, sortable columns, confirmation dialogs, in-app error messages.
+- Favorite counts per dimension: how many visualizations, maps and event
+  visualizations use it, split into public, shared and private by each
+  favorite's sharing.
+- A **Columns** chooser above the table. Type and Name are always shown; the
+  choice is remembered per browser in `localStorage`
+  (`data-dimension-disabler.columns`).
+- An ⓘ tooltip in every numeric column header explaining what it counts.
 - Support for DHIS2 2.40 to 2.43.
 
 ## [0.1.0]

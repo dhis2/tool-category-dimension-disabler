@@ -19,6 +19,12 @@ in the last 12 months and lets an admin disable them.
   `reset` (`reset` clears a stale mutation error when a dialog is opened for
   a different row or cancelled, without clobbering a concurrent call's
   loading state).
+- `src/components/columns.ts` — the single source of truth for the usage
+  table's columns (key, label, header tooltip, alignment, formatter, whether
+  it can be hidden) plus the default visible set. Add or change a column
+  here; `UsageTable` and `ColumnChooser` both render from it. Visibility is
+  persisted per browser in `localStorage` under
+  `data-dimension-disabler.columns` (a JSON array of column keys).
 - `src/components/*` — presentational; `UsageView` owns dialogs + mutations.
 
 ## Conventions

@@ -14,13 +14,21 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 APP_PATH = "/api/apps/data-dimension-disabler/index.html"
 
 # Selectors (module constants: they repeat across flows)
-HEADING = "h1"
-HEADING_TEXT = "Data Dimension Disabler"
+# The app renders no <h1> of its own (the header bar carries the app name),
+# so the app frame is recognised by the intro block, which every state shows.
+APP_MARKER = "details > summary"
+APP_MARKER_TEXT = "About this tool"
 NOTICE_BOX = "[data-test='dhis2-uicore-noticebox']"
 MUTATION_ERROR = "[data-test='sql-view-mutation-error']"
 USAGE_TABLE = "[data-test='usage-table']"
 USAGE_ROW = "[data-test='usage-row']"
 USAGE_COUNT = "[data-test='usage-count']"
+USAGE_HEADER_PREFIX = "usage-header-"
+USAGE_HEADER = f"[data-test^='{USAGE_HEADER_PREFIX}']"
+COLUMN_CHOOSER = "[data-test='column-chooser']"
+COLUMN_CHOOSER_MENU = "[data-test='column-chooser-menu']"
+COLUMN_CHOOSER_ITEM = "[data-test='column-chooser-{key}'] [role='menuitemcheckbox']"
+LAYER_BACKDROP = "[data-test='dhis2-uicore-layer'] .backdrop"
 DISABLE_DIALOG = "[data-test='disable-dialog']"
 REMOVE_DIALOG = "[data-test='remove-view-dialog']"
 ALERT_BAR = "[data-test='dhis2-uicore-alertbar']"
@@ -102,9 +110,9 @@ def app_frame(page, timeout_ms=DEFAULT_TIMEOUT_MS):
     while time.monotonic() < deadline:
         for frame in page.frames:
             try:
-                heading = frame.locator(HEADING).first
-                if heading.count() > 0 and HEADING_TEXT in (
-                    heading.text_content() or ""
+                marker = frame.locator(APP_MARKER).first
+                if marker.count() > 0 and APP_MARKER_TEXT in (
+                    marker.text_content() or ""
                 ):
                     return frame
             except PlaywrightTimeoutError:
@@ -112,7 +120,7 @@ def app_frame(page, timeout_ms=DEFAULT_TIMEOUT_MS):
             except Exception:  # noqa: BLE001 - frame detached mid-scan
                 continue
         page.wait_for_timeout(250)
-    raise AssertionError("App frame with the expected heading never appeared")
+    raise AssertionError("App frame with the expected intro never appeared")
 
 
 def in_global_shell(page):
@@ -154,24 +162,72 @@ def wait_for_notice(frame, expected_title, timeout_ms=DEFAULT_TIMEOUT_MS):
     )
 
 
+def visible_column_keys(frame):
+    """Keys of the currently shown columns, in display order.
+
+    Read off the header cells' `data-test` suffixes, so the reader follows
+    whatever the column chooser has enabled instead of a fixed cell order.
+    """
+    headers = frame.locator(USAGE_HEADER)
+    return [
+        (headers.nth(index).get_attribute("data-test") or "").removeprefix(
+            USAGE_HEADER_PREFIX
+        )
+        for index in range(headers.count())
+    ]
+
+
 def table_rows(frame):
-    """Visible rows as dicts of the app's rendered cell values."""
+    """Visible rows as dicts keyed by column key, for the visible columns.
+
+    Each row carries one trailing action cell with no header of its own;
+    zipping against the header keys drops it.
+    """
+    keys = visible_column_keys(frame)
     rows = []
     row_locators = frame.locator(USAGE_ROW)
     for index in range(row_locators.count()):
         cells = row_locators.nth(index).locator("td")
         values = [cells.nth(i).inner_text().strip() for i in range(cells.count())]
-        rows.append(
-            {
-                "type": values[0],
-                "name": values[1],
-                "uid": values[2],
-                "views": values[3],
-                "percent": values[4],
-                "percent_of_views": values[5],
-            }
-        )
+        rows.append(dict(zip(keys, values)))
     return rows
+
+
+def open_column_chooser(frame):
+    """Open the "Columns" dropdown and return its menu."""
+    frame.locator(COLUMN_CHOOSER).get_by_role("button").first.click()
+    menu = frame.locator(COLUMN_CHOOSER_MENU).first
+    menu.wait_for(state="visible", timeout=DEFAULT_TIMEOUT_MS)
+    return menu
+
+
+def close_column_chooser(frame):
+    """Close the "Columns" dropdown by clicking away from it.
+
+    Ticking an item deliberately leaves the menu open, and the flyout's
+    backdrop then covers the toggle button, so the way out is the same as
+    a user's: a click on the backdrop.
+    """
+    frame.locator(LAYER_BACKDROP).first.click(position={"x": 5, "y": 5})
+    frame.locator(COLUMN_CHOOSER_MENU).first.wait_for(
+        state="detached", timeout=DEFAULT_TIMEOUT_MS
+    )
+
+
+def column_checked(frame, key):
+    """True when the chooser reports the column as shown."""
+    menu = frame.locator(COLUMN_CHOOSER_MENU).first
+    item = menu.locator(COLUMN_CHOOSER_ITEM.format(key=key)).first
+    return item.get_attribute("aria-checked") == "true"
+
+
+def set_columns(frame, keys, shown):
+    """Show (or hide) each named column through the chooser, then close it."""
+    menu = open_column_chooser(frame)
+    for key in keys:
+        if column_checked(frame, key) != shown:
+            menu.locator(COLUMN_CHOOSER_ITEM.format(key=key)).first.click()
+    close_column_chooser(frame)
 
 
 def count_label(frame):

@@ -53,17 +53,47 @@ The view's query, for each dimension type:
   `EVENT_REPORT_VIEW` were recorded against those favorites in the last 12
   months.
 
+Alongside the view counts, the view counts the **favorites** themselves:
+how many distinct visualizations, maps and event visualizations use the
+dimension at all, whether or not anyone has opened them. That total is split
+by how each favorite is shared, from its `sharing` JSONB column:
+
+- **Public** — the favorite's public access string grants at least metadata
+  read (it starts with `r`), so everyone who can log in can find it.
+- **Shared** — not public, but shared with at least one user or user group
+  (a non-empty `users` or `userGroups` object in the sharing JSON). An
+  absent key, a JSON `null` and an empty `{}` all count as "not shared".
+- **Private** — neither of the above: only the owner can open it.
+
+The three add up to the Favorites total. The split matters when deciding
+whether a dimension is safe to disable: a dimension used only by a handful
+of private favorites affects far fewer people than one used by public
+favorites that anyone can open from a dashboard, even when the view counts
+look the same.
+
 The table shows two percentages per dimension: **"% of dimension views"** is
 that dimension's share of all views counted across every enabled dimension,
 and **"% of favorite views"** compares the same count against every favorite
 view recorded in the same window, including favorites that use no dimension
 at all — a low number there means the dimension is barely used relative to
-overall system activity, not just relative to other dimensions.
+overall system activity, not just relative to other dimensions. These
+definitions, and those of the other numeric columns, are also available in
+the app itself: hover the ⓘ icon in a column header.
 
 The view is created with `public: 'r-r-----'` sharing (metadata read plus
 data read; the `/sqlViews/{uid}/data` endpoint that returns the ranked rows
 requires data read specifically). It can be removed again from within the
 app at any time — the app offers to recreate it the next time it is opened.
+
+### Columns
+
+The **Columns** button above the table shows or hides any column except Type
+and Name, which are always shown. The table starts with Type, Name, UID,
+Favorites, Views and "% of dimension views"; Public, Shared, Private and
+"% of favorite views" start hidden. The choice is remembered in the browser's
+`localStorage` (key `data-dimension-disabler.columns`), so it is per browser
+and per user, not a server-side setting: it survives a reload but does not
+follow the user to another machine.
 
 ## Permissions
 

@@ -61,6 +61,60 @@ Checked 2026-09-21 on Sierra Leone 2.40.x and 2.43.x seeds, via broker instances
   visualization views; treat `EVENT_VISUALIZATION_VIEW` as belt-and-braces
   only, not as the value actually written by the server on these versions.
 
+## Follow-up 2026-09-22 — the `sharing` column behind the favorite counts
+
+Checked while adding the Favorites / Public / Shared / Private columns. No
+new dump was needed: the table/column dumps below already show it.
+
+- `visualization`, `map` and `eventvisualization` all carry a **`sharing`**
+  column on both 2.40.12 and 2.43.1 (visible in the raw dumps below, last
+  columns of each row). It is JSONB, with the usual DHIS2 shape
+  `{"public": "rw------", "owner": "...", "users": {...}, "userGroups": {...}}`.
+  `mapview` does **not** have one — which is fine, because the view never
+  classifies a map view: map favorites are reached through
+  `mapmapviews` → `map`, and it is the `map` row's sharing that counts,
+  the same row whose UID the view events are recorded against.
+
+- How `buildQuery.ts` classifies each favorite from that column
+  (`SHARING_CLASS_SQL`):
+  - `public` — `LEFT(sharing->>'public', 1) = 'r'`, i.e. the public access
+    string grants at least metadata read;
+  - `shared` — not public, and `sharing->'users'` or `sharing->'userGroups'`
+    is a non-empty JSON **object**;
+  - `private` — everything else.
+
+  The object test is `jsonb_typeof(...) = 'object' AND ... <> '{}'::jsonb`
+  rather than a `COALESCE` against `{}`. That distinction is load-bearing:
+  `->` returns SQL `NULL` only for an *absent* key, while for
+  `{"users": null}` it returns a non-NULL jsonb `null` that `COALESCE` does
+  not touch and that compares `<> '{}'`. `jsonb_typeof` reports `NULL` for
+  an absent key and `'null'` (not `'object'`) for a JSON null, so both fall
+  through to `private`. On the Sierra Leone 2.43 data this is the common
+  case: 32 of Facility Type's 37 public visualizations carry
+  `"users": null`.
+
+- The three classes are mutually exclusive and sum to the `favorites` total,
+  verified on all 22 rows of `agent-cdd-manual` (2.43.1).
+
+- 2026-09-22: the `CASE` above was compared against an independent Python
+  classification of the same `sharing` JSON for **all 433** favorites on
+  `agent-cdd-manual` (269+19+4 visualizations, 91 maps, 50 event
+  visualizations): **0 disagreements** — 409 public, 20 private and 4 shared
+  (all four visualizations shared via `userGroups` with `public` =
+  `--------`), so the `shared` branch is evidenced, not just assumed.
+
+- **Careful with the literal `'users'` in a SQL view.** DHIS2 refuses to
+  execute a SQL view whose query *text* contains the word `users`, answering
+  `409 E4310` "SQL query contains references to protected tables" from
+  `/api/sqlViews/{uid}/data`. The check is a plain word-boundary scan of the
+  query, so a JSON key inside a string literal is enough to trip it, even
+  though no table of that name is referenced. Probed on `agent-cdd-manual`
+  (2.43.1) with one-line views: `'users'`, `'userinfo'` and `'oauth2client'`
+  are rejected; `'user'`, `'usergroup'`, `'userGroups'`, `'useraccess'`,
+  `'usergroupaccess'`, `'sharing'`, `'map'` and `'category'` are all fine, as
+  is the split spelling `'user' || 's'`. Reading `sharing->'users'` therefore
+  has to avoid the bare literal.
+
 ## Raw output
 
 ### agent-cdd-sl40 (DHIS2 2.40.12) — table/column dump

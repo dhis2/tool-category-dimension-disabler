@@ -405,7 +405,7 @@ separately.
 | Step | 2.40.12 | 2.41.10 | 2.42.6 | 2.43.1 | 2.43.1 Laos |
 |---|---|---|---|---|---|
 | Create notice | not kept in repo | not kept in repo | not kept in repo | not kept in repo | not kept in repo |
-| Usage table | `2.40.12-02-table.png` | `2.41-02-table.png` | `2.42-02-table.png` | `2.43.1-02-table.png` | `2.43-lao-02-table.png` |
+| Usage table | `2.40.12-02-table.png` | `2.41-02-table.png` | `2.42-02-table.png` | `2.43-columns.png` (see 2026-09-22 below) | `2.43-lao-02-table.png` |
 | Filtered to one type | not kept in repo | not kept in repo | not kept in repo | not kept in repo | not kept in repo |
 | Sorted | not kept in repo | not kept in repo | not kept in repo | not kept in repo | not kept in repo |
 | Disable dialog | not kept in repo | not kept in repo | not kept in repo | not kept in repo | not kept in repo |
@@ -416,3 +416,32 @@ separately.
 | Limited user, create refused | not kept in repo | not captured (check 5 skipped on this instance) | not captured (check 5 out of scope on this instance) | not kept in repo | not captured (check 5 out of scope on this instance) |
 | Data-read error state | not kept in repo | not captured (scenario unreachable on this instance — see notes) | not kept in repo (shows the table, not an error — the scenario is unreachable on this instance, see notes) | not kept in repo | not kept in repo (shows the table, not an error — the scenario is unreachable on this instance, see notes) |
 | `restore-view` exception (L9 artifact) | n/a | n/a | not kept in repo (shows the table, not a notice box — see notes) | n/a | not kept in repo (shows the table, not a notice box — see notes) |
+
+## 2026-09-22 — favorite-count columns re-check (2.43.1)
+
+The table's columns changed on 2026-09-22 (favorite counts split by sharing,
+a column chooser, header tooltips, no in-app title), so the 2.43.1 usage-table
+screenshot from this review no longer shows the current UI. The table above now
+points at **`2.43-columns.png`**, taken on `agent-cdd-manual` (DHIS2 2.43.1)
+with Public, Shared and Private enabled through the Columns chooser;
+`2.43.1-02-table.png` is kept as the record of what this review actually saw.
+The other versions' screenshots are from the 2026-09-21 run and likewise still
+show the older column set.
+
+Re-run of the e2e suite on `agent-cdd-manual` (2.43.1), all flows including
+the new `columns-chooser` one: **56 PASS, 2 INFO, 0 FAIL**.
+
+Favorite counts shown in the table, cross-checked against a second,
+independently written SQL count of the same favorites (run through a
+throwaway SQL view, then deleted):
+
+| Dimension | Type | Favorites | Public | Shared | Private | SQL |
+|---|---|---|---|---|---|---|
+| Facility Type (`J5jldMd8OHv`) | Organisation unit group set | 42 | 37 | 0 | 5 | identical |
+| Facility Ownership (`Bpx0589u8y0`) | Organisation unit group set | 12 | 11 | 0 | 1 | identical |
+| Location Fixed/Outreach (`fMZEcRHuamy`) | Category | 14 | 14 | 0 | 0 | identical |
+
+Two test-oracle updates were needed in the suite itself, neither an app
+defect: the app frame is now found by the intro block rather than an `<h1>`
+(the app no longer renders one), and numeric columns sort descending on the
+first click, which the suite still expected to be ascending.

@@ -18,6 +18,7 @@ from dhis2_api import (
     grid_rows,
     hostname_of,
 )
+from favorite_counts_sql import favorite_counts, UnreadableFavorites
 from legacy_sql_view import LEGACY_NAME, legacy_definition
 
 PASS = "PASS"
@@ -44,6 +45,19 @@ TYPE_ENDPOINTS = {
     "DATAELEMENT_GROUP_SET": "dataElementGroupSets",
     "CATEGORYOPTION_GROUP_SET": "categoryOptionGroupSets",
 }
+
+DEFAULT_COLUMNS = ("type", "name", "uid", "favorites", "views", "percent")
+# Column keys shown only after the user asks for them, and the oracle key
+# each of them is cross-checked against.
+SHARING_COLUMNS = {
+    "publicFavorites": "public",
+    "sharedFavorites": "shared",
+    "privateFavorites": "private",
+}
+FAVORITE_COLUMNS = {"favorites": "favorites", **SHARING_COLUMNS}
+CHOOSER_COLUMN = "privateFavorites"
+CHOOSER_COLUMN_LABEL = "Private"
+CROSSCHECK_ROW_LIMIT = 3
 
 LIMITED_ROLE_NAME = "cdd-e2e-app-only"
 LIMITED_USERNAME = "cdde2elimited"
@@ -155,11 +169,11 @@ def flow_create_view(ctx):
         ("Response time of /sqlViews/{id}/data", INFO, f"{seconds * 1000:.0f} ms")
     )
 
-    results.extend(_compare_table_with_api(frame, api_rows))
+    results.extend(_compare_table_with_api(ctx, frame, api_rows))
     return results
 
 
-def _compare_table_with_api(frame, api_rows):
+def _compare_table_with_api(ctx, frame, api_rows):
     results = []
     dom_rows = ui.table_rows(frame)
     results.append(
@@ -207,11 +221,110 @@ def _compare_table_with_api(frame, api_rows):
             f"types shown: {sorted(present)}",
         )
     )
+
+    results.extend(_favorite_column_checks(ctx, frame, api_rows))
     return results
 
 
 def _api_types(api_rows):
     return {row["type"] for row in api_rows}
+
+
+def _crosscheck_targets(api_rows):
+    """The few most-used dimensions: the rows with anything to compare."""
+    ranked = sorted(api_rows, key=lambda row: int(row["favorites"]), reverse=True)
+    return ranked[:CROSSCHECK_ROW_LIMIT]
+
+
+def _favorite_crosscheck(ctx, shown, api_row):
+    """One row's four favorite counts against a second, independent count."""
+    uid = api_row["uid"]
+    step = f"Favorite counts match an independent count ({api_row['name']})"
+    try:
+        counts = favorite_counts(
+            ctx.client, api_row["type"], uid, ctx.minor, ctx.provisioner
+        )
+    except UnreadableFavorites as error:
+        return (step, SKIP, str(error))
+    row = shown.get(uid) or {}
+    expected = {key: str(counts[oracle]) for key, oracle in FAVORITE_COLUMNS.items()}
+    actual = {key: row.get(key) for key in FAVORITE_COLUMNS}
+    return (
+        step,
+        PASS if actual == expected else FAIL,
+        f"{uid}: table {actual}, server {expected}",
+    )
+
+
+def _favorite_column_checks(ctx, frame, api_rows):
+    """Show the sharing breakdown, prove it against SQL, hide it again."""
+    results = []
+    ui.set_columns(frame, list(FAVORITE_COLUMNS), True)
+    keys = ui.visible_column_keys(frame)
+    results.append(
+        (
+            "The chooser adds the favorite-count columns",
+            PASS if all(key in keys for key in FAVORITE_COLUMNS) else FAIL,
+            f"columns shown: {keys}",
+        )
+    )
+    shown = {row["uid"]: row for row in ui.table_rows(frame)}
+    _shot(ctx, "02b-favorite-columns")
+    results.extend(
+        _favorite_crosscheck(ctx, shown, api_row)
+        for api_row in _crosscheck_targets(api_rows)
+    )
+    ui.set_columns(frame, list(SHARING_COLUMNS), False)
+    return results
+
+
+def _column_state(frame, step, shown):
+    keys = ui.visible_column_keys(frame)
+    return (
+        step,
+        PASS if (CHOOSER_COLUMN in keys) == shown else FAIL,
+        f"columns shown: {keys}",
+    )
+
+
+def _reload_table(ctx):
+    ctx.page.reload(wait_until="domcontentloaded")
+    frame = ui.app_frame(ctx.page)
+    ui.wait_for_table(frame)
+    return frame
+
+
+def flow_columns_chooser(ctx):
+    """The chooser shows a column and remembers the choice for this browser."""
+    results = []
+    frame = _table_frame(ctx)
+    keys = ui.visible_column_keys(frame)
+    results.append(
+        (
+            "The table opens with the default columns",
+            PASS if tuple(keys) == DEFAULT_COLUMNS else FAIL,
+            f"columns shown: {keys}",
+        )
+    )
+
+    ui.set_columns(frame, [CHOOSER_COLUMN], True)
+    results.append(
+        _column_state(frame, f"Ticking '{CHOOSER_COLUMN_LABEL}' adds the column", True)
+    )
+    _shot(ctx, "12-columns-chosen")
+
+    frame = _reload_table(ctx)
+    results.append(
+        _column_state(frame, "The chosen column survives a page reload", True)
+    )
+
+    ui.set_columns(frame, [CHOOSER_COLUMN], False)
+    results.append(
+        _column_state(
+            frame, f"Unticking '{CHOOSER_COLUMN_LABEL}' removes the column", False
+        )
+    )
+    return results
 
 
 def flow_filter_and_sort(ctx):
@@ -263,6 +376,17 @@ def _sort_checks(frame):
             f"first: {descending[:2]}",
         )
     )
+    # Numeric columns start descending (most-viewed first is this tool's
+    # purpose), text columns ascending - see UsageTable.defaultDirectionFor.
+    ui.sort_by(frame, "views")
+    views_desc = [int(value) for value in ui.column_values(frame, "views")]
+    results.append(
+        (
+            "Sort by views descending (the first click on a numeric column)",
+            PASS if views_desc == sorted(views_desc, reverse=True) else FAIL,
+            f"first: {views_desc[:3]}",
+        )
+    )
     ui.sort_by(frame, "views")
     views_asc = [int(value) for value in ui.column_values(frame, "views")]
     results.append(
@@ -270,15 +394,6 @@ def _sort_checks(frame):
             "Sort by views ascending",
             PASS if views_asc == sorted(views_asc) else FAIL,
             f"first: {views_asc[:3]}",
-        )
-    )
-    ui.sort_by(frame, "views")
-    views_desc = [int(value) for value in ui.column_values(frame, "views")]
-    results.append(
-        (
-            "Sort by views descending",
-            PASS if views_desc == sorted(views_desc, reverse=True) else FAIL,
-            f"first: {views_desc[:3]}",
         )
     )
     return results
@@ -632,9 +747,9 @@ def flow_limited_user(ctx):
         )
         results.append(
             (
-                "App stays usable (heading still rendered, no page error)",
+                "App stays usable (intro still rendered, no page error)",
                 PASS
-                if frame.locator(ui.HEADING).count() > 0 and not recorder.page_errors
+                if frame.locator(ui.APP_MARKER).count() > 0 and not recorder.page_errors
                 else FAIL,
                 f"page errors: {recorder.page_errors}",
             )
@@ -691,6 +806,7 @@ def flow_console_clean(ctx):
 FLOWS = [
     ("load-missing", flow_load_missing),
     ("create-view", flow_create_view),
+    ("columns-chooser", flow_columns_chooser),
     ("filter-sort", flow_filter_and_sort),
     ("disable-per-type", flow_disable_one_per_type),
     ("re-enable", flow_reenable),
