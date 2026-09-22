@@ -7,6 +7,10 @@ export type UsageRow = {
     type: DimensionTypeKey
     uid: string
     name: string
+    favorites: number
+    publicFavorites: number
+    sharedFavorites: number
+    privateFavorites: number
     views: number
     percent: number
     percentOfViews: number
@@ -36,7 +40,18 @@ const toNumber = (value: string | number | null | undefined): number => {
 // named constants (rather than repeating the string literals below) so a
 // column rename in one place can't drift from the other without a compiler
 // error.
-const [TYPE, UID, NAME, VIEWS, PERCENT, PERCENT_OF_VIEWS] = SQL_VIEW_COLUMNS
+const [
+    TYPE,
+    UID,
+    NAME,
+    FAVORITES,
+    PUBLIC,
+    SHARED,
+    PRIVATE,
+    VIEWS,
+    PERCENT,
+    PERCENT_OF_VIEWS,
+] = SQL_VIEW_COLUMNS
 
 /** Map SQL view grid rows to typed rows, looking columns up by header name. */
 export const parseUsageRows = (grid: ListGrid | undefined): UsageRow[] => {
@@ -59,6 +74,10 @@ export const parseUsageRows = (grid: ListGrid | undefined): UsageRow[] => {
                 type,
                 uid: String(column(row, UID) ?? ''),
                 name: String(column(row, NAME) ?? ''),
+                favorites: toNumber(column(row, FAVORITES)),
+                publicFavorites: toNumber(column(row, PUBLIC)),
+                sharedFavorites: toNumber(column(row, SHARED)),
+                privateFavorites: toNumber(column(row, PRIVATE)),
                 views: toNumber(column(row, VIEWS)),
                 percent: toNumber(column(row, PERCENT)),
                 percentOfViews: toNumber(column(row, PERCENT_OF_VIEWS)),

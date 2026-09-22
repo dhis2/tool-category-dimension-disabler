@@ -43,11 +43,17 @@ describe('App', () => {
                         'type',
                         'uid',
                         'name',
+                        'favorites',
+                        'public_favorites',
+                        'shared_favorites',
+                        'private_favorites',
                         'views',
                         'percent',
                         'percent_of_views',
                     ].map((name) => ({ name })),
-                    rows: [['CATEGORY', 'cat1', 'Gender', 1, 100, 100]],
+                    rows: [
+                        ['CATEGORY', 'cat1', 'Gender', 1, 0, 1, 0, 1, 100, 100],
+                    ],
                 },
             }),
         }

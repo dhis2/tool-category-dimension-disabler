@@ -10,13 +10,17 @@ const grid = {
         'type',
         'uid',
         'name',
+        'favorites',
+        'public_favorites',
+        'shared_favorites',
+        'private_favorites',
         'views',
         'percent',
         'percent_of_views',
     ].map((name) => ({ name })),
     rows: [
-        ['CATEGORY', 'cat1', 'Gender', 4, 100, 50],
-        ['DATAELEMENT_GROUP_SET', 'degs1', 'Diseases', 0, 0, 0],
+        ['CATEGORY', 'cat1', 'Gender', 2, 1, 1, 0, 4, 100, 50],
+        ['DATAELEMENT_GROUP_SET', 'degs1', 'Diseases', 0, 0, 0, 0, 0, 0, 0],
     ],
 }
 
@@ -97,7 +101,18 @@ describe('UsageView', () => {
             ...grid,
             rows: [
                 ...grid.rows,
-                ['ORGUNIT_GROUP_SET', 'ougs1', 'Facility Type', 0, 0, 0],
+                [
+                    'ORGUNIT_GROUP_SET',
+                    'ougs1',
+                    'Facility Type',
+                    1,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
             ],
         }
         let calls = 0
