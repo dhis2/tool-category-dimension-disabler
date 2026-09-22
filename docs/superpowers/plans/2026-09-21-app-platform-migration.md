@@ -116,7 +116,7 @@ Expected (from the spec), per dimension type:
 | DATAELEMENT_GROUP_SET | `dataelementgroupset` (`dataelementgroupsetid`) | `dataelementgroupsetdimension` (`dataelementgroupsetdimensionid`, `dataelementgroupsetid`) | `dataelementgroupsetdimensions` |
 | CATEGORYOPTION_GROUP_SET | `categoryoptiongroupset` (`categoryoptiongroupsetid`) | `categoryoptiongroupsetdimension` (`categoryoptiongroupsetdimensionid`, `categoryoptiongroupsetid`) | `categoryoptiongroupsetdimensions` |
 
-Expected favorite joins: `visualization(visualizationid, uid)`, `mapview(mapviewid)` + `map_mapviews(mapid, mapviewid)` + `map(mapid, uid)`, `eventvisualization(eventvisualizationid, uid)`. Expected join table columns: `<favorite>id` + `<dimensiontable>id`. Every entity table must have `uid`, `name`, `datadimension`.
+Expected favorite joins: `visualization(visualizationid, uid)`, `mapview(mapviewid)` + `map_mapviews(mapid, mapviewid)` + `map(mapid, uid)`, `eventvisualization(eventvisualizationid, uid)`. *(Outcome: the join table is actually `mapmapviews`, and data element group set join tables exist only for `visualization`; Task 4 reflects this.)* Expected join table columns: `<favorite>id` + `<dimensiontable>id`. Every entity table must have `uid`, `name`, `datadimension`.
 
 Write the file with this shape (fill from the real output; keep it short):
 
@@ -744,21 +744,33 @@ describe('buildQuery', () => {
         expect(sql.match(/UNION ALL/g)).toHaveLength(DIMENSION_TYPE_KEYS.length - 1)
     })
 
-    it('joins all three favorite kinds for every type', () => {
+    it('joins all three favorite kinds for categories and org unit / category option group sets', () => {
         const sql = buildQuery(43)
         expect(sql).toContain('FROM visualization_categorydimensions a')
         expect(sql).toContain('FROM mapview_categorydimensions a')
         expect(sql).toContain('FROM eventvisualization_categorydimensions a')
         expect(sql).toContain('FROM visualization_orgunitgroupsetdimensions a')
-        expect(sql).toContain('FROM mapview_dataelementgroupsetdimensions a')
+        expect(sql).toContain('FROM mapview_orgunitgroupsetdimensions a')
+        expect(sql).toContain('FROM eventvisualization_orgunitgroupsetdimensions a')
+        expect(sql).toContain('FROM visualization_categoryoptiongroupsetdimensions a')
+        expect(sql).toContain('FROM mapview_categoryoptiongroupsetdimensions a')
         expect(sql).toContain(
             'FROM eventvisualization_categoryoptiongroupsetdimensions a'
         )
     })
 
+    it('joins data element group sets to visualizations only (no map view / event visualization join tables exist)', () => {
+        for (const minor of [40, 43]) {
+            const sql = buildQuery(minor)
+            expect(sql).toContain('FROM visualization_dataelementgroupsetdimensions a')
+            expect(sql).not.toContain('mapview_dataelementgroupsetdimensions')
+            expect(sql).not.toContain('eventvisualization_dataelementgroupsetdimensions')
+        }
+    })
+
     it('counts map views against the map uid, not the map view uid', () => {
         const sql = buildQuery(43)
-        expect(sql).toContain('JOIN map_mapviews mm ON mm.mapviewid = a.mapviewid')
+        expect(sql).toContain('JOIN mapmapviews mm ON mm.mapviewid = a.mapviewid')
         expect(sql).toContain('JOIN map f ON f.mapid = mm.mapid')
     })
 
@@ -847,10 +859,10 @@ const FAVORITE_SOURCES: readonly FavoriteSource[] = [
     },
     {
         // A map view is one layer of a map; view events are recorded against
-        // the map's uid, so go through map_mapviews to reach it.
+        // the map's uid, so go through mapmapviews to reach it.
         prefix: 'mapview',
         favoriteJoin:
-            'JOIN map_mapviews mm ON mm.mapviewid = a.mapviewid\n        JOIN map f ON f.mapid = mm.mapid',
+            'JOIN mapmapviews mm ON mm.mapviewid = a.mapviewid\n        JOIN map f ON f.mapid = mm.mapid',
     },
     {
         prefix: 'eventvisualization',
@@ -860,16 +872,21 @@ const FAVORITE_SOURCES: readonly FavoriteSource[] = [
 ]
 
 /**
- * Favorite sources that exist for a given type on a given server version.
- * All three exist for all four types on 2.40-2.43 (see docs/schema-check.md);
- * if the schema check found an exception, filter it out here.
+ * Favorite sources that have a join table for a given type. Verified on
+ * 2.40 and 2.43 (docs/schema-check.md): every type has all three, except
+ * data element group sets, which only visualizations can carry — there is
+ * no mapview_ or eventvisualization_dataelementgroupsetdimensions table on
+ * any supported version. The minor version is accepted for symmetry with
+ * the table-name lookup but no source is version-gated today.
  */
 const favoriteSourcesFor = (
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     type: DimensionType,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     minor: number
-): readonly FavoriteSource[] => FAVORITE_SOURCES
+): readonly FavoriteSource[] =>
+    type.key === 'DATAELEMENT_GROUP_SET'
+        ? FAVORITE_SOURCES.filter((source) => source.prefix === 'visualization')
+        : FAVORITE_SOURCES
 
 /** (entity id, favorite uid) pairs for every favorite that uses the dimension */
 const usageSubquery = (type: DimensionType, minor: number): string =>
@@ -920,7 +937,7 @@ CROSS JOIN total_favorite_views f
 ORDER BY s.views DESC, s.name`
 ```
 
-If `docs/schema-check.md` reports a missing join table (for example no `eventvisualization_dataelementgroupsetdimensions` on 2.40), implement `favoriteSourcesFor` as a filter on `(type.key, prefix, minor)` and add a test asserting that table is absent from `buildQuery(40)` and present in `buildQuery(43)`.
+The two schema facts above (`mapmapviews`, and data element group sets only on visualizations) come from `docs/schema-check.md` (Task 1) and hold on every supported version. Cross-check the rest of the generated SQL against that document's raw output before moving on.
 
 - [ ] **Step 4: Run the tests**
 

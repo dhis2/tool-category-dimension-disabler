@@ -140,7 +140,7 @@ ORDER BY s.views DESC, s.name;
 
 One correction to the current view: `datastatisticsevent.favoriteuid` for a
 `MAP_VIEW` event holds the **map** uid, not the map view (layer) uid, so the
-map branch joins `mapview -> map_mapviews -> map` and uses `map.uid`. The
+map branch joins `mapview -> mapmapviews -> map` and uses `map.uid`. The
 current view joins `mapview.uid` and therefore never counts map views.
 Also, the event type filter is widened to
 `VISUALIZATION_VIEW, MAP_VIEW, EVENT_VISUALIZATION_VIEW, EVENT_CHART_VIEW,
@@ -155,8 +155,12 @@ counted once for each. Views of a favorite are counted once per dimension
 even if the favorite lists the dimension twice (`DISTINCT`).
 
 Two variants exist, selected by server minor: on 40 the category table is
-`dataelementcategory`, from 41 on it is `category`. If the schema check in
-3.3 reveals further differences they are added the same way.
+`dataelementcategory`, from 41 on it is `category`. The schema check
+(`docs/schema-check.md`, 2.40.12 and 2.43.1) found two further facts that
+hold on every version: the map join table is `mapmapviews`, and data element
+group set dimensions exist only on visualizations (no `mapview_` or
+`eventvisualization_dataelementgroupsetdimensions` tables), so that type's
+UNION has one branch.
 
 ### 4.1 Outdated-view detection
 
