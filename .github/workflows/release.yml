@@ -35,7 +35,7 @@ jobs:
               run: yarn install --frozen-lockfile --ignore-scripts
 
             - name: Build
-              run: yarn run zip
+              run: yarn build
 
             - name: Extract changelog section
               # Tags are protected: they cannot be deleted or moved. So a missing
@@ -63,4 +63,4 @@ jobs:
                   gh release create "$GITHUB_REF_NAME" \
                     --title "$GITHUB_REF_NAME" \
                     --notes-file release-notes.md \
-                    compiled/*.zip
+                    build/bundle/*.zip

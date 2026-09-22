@@ -5,11 +5,197 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-09-21T14:14:21.139Z\n"
-"PO-Revision-Date: 2026-09-21T14:14:21.140Z\n"
+"POT-Creation-Date: 2026-09-21T16:01:39.830Z\n"
+"PO-Revision-Date: 2026-09-21T16:01:39.830Z\n"
 
 msgid "Data Dimension Disabler"
 msgstr "Data Dimension Disabler"
+
+msgid "Unknown error"
+msgstr "Unknown error"
+
+msgid "The request failed"
+msgstr "The request failed"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Disable data dimension"
+msgstr "Disable data dimension"
+
+msgid "Disable the {{type}} \"{{name}}\" as a data dimension?"
+msgstr "Disable the {{type}} \"{{name}}\" as a data dimension?"
+
+msgid ""
+"Favorites that use this dimension will stop working until it is re-enabled "
+"in the Maintenance app. Analytics tables shrink at the next analytics run."
+msgstr ""
+"Favorites that use this dimension will stop working until it is re-enabled "
+"in the Maintenance app. Analytics tables shrink at the next analytics run."
+
+msgid "Disable"
+msgstr "Disable"
+
+msgid "About this tool"
+msgstr "About this tool"
+
+msgid ""
+"Categories, organisation unit group sets, data element group sets and "
+"category option group sets can be enabled as data dimensions. Enabled "
+"dimensions appear in the analytics apps, where they can be used to "
+"disaggregate data. Each enabled dimension adds a column to the analytics "
+"tables, which costs time during analytics generation and disk space."
+msgstr ""
+"Categories, organisation unit group sets, data element group sets and "
+"category option group sets can be enabled as data dimensions. Enabled "
+"dimensions appear in the analytics apps, where they can be used to "
+"disaggregate data. Each enabled dimension adds a column to the analytics "
+"tables, which costs time during analytics generation and disk space."
+
+msgid ""
+"The table ranks every enabled dimension by how often favorites "
+"(visualizations, maps, event visualizations) that use it were opened in the "
+"last 12 months. \"% of dimension views\" is the share of all such views; "
+"\"% of favorite views\" compares against all favorite views, including "
+"favorites that use no dimension."
+msgstr ""
+"The table ranks every enabled dimension by how often favorites "
+"(visualizations, maps, event visualizations) that use it were opened in the "
+"last 12 months. \"% of dimension views\" is the share of all such views; "
+"\"% of favorite views\" compares against all favorite views, including "
+"favorites that use no dimension."
+
+msgid ""
+"Dimensions with no or very few views are candidates for disabling. "
+"Favorites that use a disabled dimension stop working, and section forms "
+"lose their subtotals for it, so check before disabling. A dimension can be "
+"re-enabled at any time in the Maintenance app. Try changes on a test system "
+"first."
+msgstr ""
+"Dimensions with no or very few views are candidates for disabling. "
+"Favorites that use a disabled dimension stop working, and section forms "
+"lose their subtotals for it, so check before disabling. A dimension can be "
+"re-enabled at any time in the Maintenance app. Try changes on a test system "
+"first."
+
+msgid "Remove the SQL view"
+msgstr "Remove the SQL view"
+
+msgid ""
+"This deletes the SQL view \"{{name}}\" that the app installed. The app will "
+"offer to recreate it the next time it is opened."
+msgstr ""
+"This deletes the SQL view \"{{name}}\" that the app installed. The app will "
+"offer to recreate it the next time it is opened."
+
+msgid "Remove SQL view"
+msgstr "Remove SQL view"
+
+msgid ""
+"Your user needs the \"Add/Update SQL view\" authority (or the Superuser "
+"role) to install the view."
+msgstr ""
+"Your user needs the \"Add/Update SQL view\" authority (or the Superuser "
+"role) to install the view."
+
+msgid "Could not check the SQL view"
+msgstr "Could not check the SQL view"
+
+msgid "Retry"
+msgstr "Retry"
+
+msgid "SQL view not installed"
+msgstr "SQL view not installed"
+
+msgid ""
+"The tool needs an SQL view named \"{{name}}\" to count how often favorites "
+"use each dimension. Creating it requires the \"Add/Update SQL view\" "
+"authority. The view is public read-only and can be removed from this app at "
+"any time."
+msgstr ""
+"The tool needs an SQL view named \"{{name}}\" to count how often favorites "
+"use each dimension. Creating it requires the \"Add/Update SQL view\" "
+"authority. The view is public read-only and can be removed from this app at "
+"any time."
+
+msgid "Create SQL view"
+msgstr "Create SQL view"
+
+msgid "SQL view needs an update"
+msgstr "SQL view needs an update"
+
+msgid ""
+"An older version of the SQL view is installed (for example from the "
+"Category dimension disabler, or for a different DHIS2 version). Update it "
+"to include group sets and the current server version."
+msgstr ""
+"An older version of the SQL view is installed (for example from the "
+"Category dimension disabler, or for a different DHIS2 version). Update it "
+"to include group sets and the current server version."
+
+msgid "Update SQL view"
+msgstr "Update SQL view"
+
+msgid "Dimension type"
+msgstr "Dimension type"
+
+msgid "All types"
+msgstr "All types"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "UID"
+msgstr "UID"
+
+msgid "Views (12 months)"
+msgstr "Views (12 months)"
+
+msgid "% of dimension views"
+msgstr "% of dimension views"
+
+msgid "% of favorite views"
+msgstr "% of favorite views"
+
+msgid "1 enabled dimension"
+msgstr "1 enabled dimension"
+
+msgid "Sort by {{column}}"
+msgstr "Sort by {{column}}"
+
+msgid "Action"
+msgstr "Action"
+
+msgid "No enabled data dimensions found"
+msgstr "No enabled data dimensions found"
+
+msgid "\"{{name}}\" is no longer a data dimension"
+msgstr "\"{{name}}\" is no longer a data dimension"
+
+msgid "Could not load dimension usage"
+msgstr "Could not load dimension usage"
+
+msgid ""
+"If the view exists but fails on this server version, remove it below and "
+"let the app recreate it."
+msgstr ""
+"If the view exists but fails on this server version, remove it below and "
+"let the app recreate it."
+
+msgid "Category"
+msgstr "Category"
+
+msgid "Organisation unit group set"
+msgstr "Organisation unit group set"
+
+msgid "Data element group set"
+msgstr "Data element group set"
+
+msgid "Category option group set"
+msgstr "Category option group set"
 
 msgctxt "Application title"
 msgid "__MANIFEST_APP_TITLE"
