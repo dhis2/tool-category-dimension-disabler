@@ -41,12 +41,13 @@ export const useEngineMutation = () => {
     )
 
     // Clears a stale error, e.g. when a dialog is reopened for a different
-    // row. Only clears `loading` too if nothing is still in flight, so this
-    // can't clobber a concurrent call's loading state.
+    // row - unconditionally, even if a previous call is still in flight, so
+    // the old row's error doesn't linger in a dialog reopened for a new row
+    // during a slow request. `loading` is always re-derived from the
+    // in-flight counter rather than hard-coded to false, so this can't
+    // clobber a concurrent call's loading state.
     const reset = useCallback(() => {
-        if (pendingCalls.current === 0) {
-            setState({ loading: false })
-        }
+        setState({ loading: pendingCalls.current > 0 })
     }, [])
 
     return { run, state, reset }

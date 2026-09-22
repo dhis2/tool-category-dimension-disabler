@@ -57,21 +57,17 @@ const FAVORITE_SOURCES: readonly FavoriteSource[] = [
  * 2.40 and 2.43 (docs/schema-check.md): every type has all three, except
  * data element group sets, which only visualizations can carry — there is
  * no mapview_ or eventvisualization_dataelementgroupsetdimensions table on
- * any supported version. The minor version is accepted for symmetry with
- * the table-name lookup but no source is version-gated today.
+ * any supported version. This is version-independent today; if a source
+ * ever becomes version-gated, re-add a `minor` parameter here.
  */
-const favoriteSourcesFor = (
-    type: DimensionType,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    minor: number
-): readonly FavoriteSource[] =>
+const favoriteSourcesFor = (type: DimensionType): readonly FavoriteSource[] =>
     type.key === 'DATAELEMENT_GROUP_SET'
         ? FAVORITE_SOURCES.filter((source) => source.prefix === 'visualization')
         : FAVORITE_SOURCES
 
 /** (entity id, favorite uid) pairs for every favorite that uses the dimension */
-const usageSubquery = (type: DimensionType, minor: number): string =>
-    favoriteSourcesFor(type, minor)
+const usageSubquery = (type: DimensionType): string =>
+    favoriteSourcesFor(type)
         .map(
             ({
                 prefix,
@@ -87,7 +83,7 @@ const summaryBlock = (type: DimensionType, minor: number): string =>
     `  SELECT '${type.key}' AS type, z.uid, z.name, COALESCE(SUM(fv.views), 0) AS views
   FROM ${type.table(minor)} z
   LEFT JOIN (
-${usageSubquery(type, minor)}
+${usageSubquery(type)}
   ) y ON y.objectid = z.${type.primaryKey}
   LEFT JOIN favorite_views fv ON fv.favoriteuid = y.favoriteuid
   WHERE z.datadimension = TRUE

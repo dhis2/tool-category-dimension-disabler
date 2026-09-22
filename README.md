@@ -72,8 +72,16 @@ app at any time — the app offers to recreate it the next time it is opened.
 - **Metadata write** on a category, organisation unit group set, data
   element group set or category option group set — required to disable it
   as a data dimension.
-- **SQL view execute** authority — required to read the view's data and see
-  the usage ranking at all.
+- **Data read** on the "Data dimension usage" SQL view — required to read
+  the view's data and see the usage ranking at all. Its `r-r-----` sharing
+  (see above) already grants this to every logged-in user. The **SQL view
+  execute** authority is _not_ what is checked here: a demo `admin` without
+  it still reads the ranking fine, while removing data read from the view's
+  sharing makes the data endpoint answer `409 E4312` ("Current user is not
+  authorised to read data from SQL view") regardless of that authority.
+- On DHIS2 2.42 and later, the global app shell also requires the
+  server-generated **M_datadimensiondisabler** authority to open the app at
+  all — without it, the shell answers "Unable to find an app for this URL".
 
 ## Compatibility
 

@@ -3,7 +3,10 @@ import { screen, waitFor } from '@testing-library/react'
 import React from 'react'
 import { buildQuery } from '../sql/buildQuery'
 import { SQL_VIEW_ID } from '../sql/sqlView'
-import { renderWithProvider } from '../test-utils/renderWithProvider'
+import {
+    defaultConfig,
+    renderWithProvider,
+} from '../test-utils/renderWithProvider'
 import { classifyStatus, useSqlViewStatus } from './useSqlViewStatus'
 
 const notFound = () =>
@@ -52,6 +55,18 @@ describe('classifyStatus', () => {
                 minor: 41,
             })
         ).toBe('OUTDATED')
+    })
+    it('is ERROR, not OUTDATED against the pre-2.41 schema, when the server version is unknown', () => {
+        // A missing minor used to default to 0 (the pre-2.41 schema), which
+        // could misclassify a current view as OUTDATED and, on Update,
+        // install a view that fails at query time on a modern server.
+        expect(
+            classifyStatus({
+                loading: false,
+                sqlQuery: buildQuery(43),
+                minor: undefined,
+            })
+        ).toBe('ERROR')
     })
 })
 
@@ -102,5 +117,32 @@ describe('useSqlViewStatus', () => {
             expect(screen.getByText('MISSING:43')).toBeInTheDocument()
         )
         consoleError.mockRestore()
+    })
+
+    it('reports ERROR with a clear message when the server does not supply a version', async () => {
+        const sqlViews = jest.fn(async () => ({
+            id: SQL_VIEW_ID,
+            sqlQuery: buildQuery(43),
+        }))
+        const ErrorProbe = () => {
+            const { status, error } = useSqlViewStatus()
+            return (
+                <span>
+                    {status}:{error?.message}
+                </span>
+            )
+        }
+        renderWithProvider(
+            <ErrorProbe />,
+            { sqlViews },
+            { ...defaultConfig, serverVersion: undefined }
+        )
+        await waitFor(() =>
+            expect(
+                screen.getByText(
+                    'ERROR:Could not determine the DHIS2 server version, so the SQL view cannot be checked.'
+                )
+            ).toBeInTheDocument()
+        )
     })
 })
