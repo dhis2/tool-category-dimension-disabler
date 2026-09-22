@@ -36,6 +36,8 @@ None.
 
 #### M1. Only every other "… is no longer a data dimension" toast is shown
 
+**Fixed in 2c997df.** See `docs/review-2026-09-21/FIXES.md`.
+
 - **Where**: `src/components/UsageView.tsx:25-32` (the `useAlert` hook) and
   `src/components/UsageView.tsx:63` (`showDisabled({ name })`).
 - **What**: disabling several dimensions in a row — the app's main workflow —
@@ -68,6 +70,8 @@ None.
 
 #### M2. `generate-view-events.sh` produces no usable ranking data
 
+**Fixed in 314e264.** See `docs/review-2026-09-21/FIXES.md`.
+
 - **Where**: `scripts/generate-view-events.sh:23` (the visualization query) and
   `:29`/`:35` (maps and event visualizations).
 - **What**: two problems in the one script the README and `CLAUDE.md` point
@@ -96,6 +100,7 @@ None.
 ### LOW
 
 - **L1. Two sources of truth for the SQL view's column names** —
+  **Fixed in 63b629c.** See `docs/review-2026-09-21/FIXES.md`.
   `src/sql/buildQuery.ts:3-10` exports `SQL_VIEW_COLUMNS`, which nothing but
   `buildQuery.test.ts:78` reads, while `src/hooks/useUsageData.ts:50-55`
   hard-codes the same six names again. Fix: import `SQL_VIEW_COLUMNS` in
@@ -109,13 +114,15 @@ None.
   own `i18n.t` string, or phrase the sentence so the label keeps its own
   capitalisation.
 - **L3. A missing `serverVersion` silently means "2.40 schema"** —
+  **Fixed in 63b629c.** See `docs/review-2026-09-21/FIXES.md`.
   `src/hooks/useSqlViewStatus.ts:44`: `serverVersion?.minor ?? 0`. With `0`
   the app builds the `dataelementcategory` variant, so on a modern server it
   would report a correct view as OUTDATED and, if the user pressed Update,
   install a view that fails at query time. The platform normally fills
   `serverVersion` in, so this is latent, not observed. Fix: treat an absent
   `serverVersion` as `LOADING`/`ERROR` rather than defaulting the minor.
-- **L4. The README overstates what "SQL view execute" does** — `README.md`
+- **L4. The README overstates what "SQL view execute" does** —
+  **Fixed in 63b629c.** See `docs/review-2026-09-21/FIXES.md`. `README.md`
   ("Permissions"): the demo `admin` on both test instances has **no**
   `F_SQLVIEW_EXECUTE` and reads the ranking fine; what the server actually
   enforces on `/sqlViews/{uid}/data` is *data read* on the view
@@ -125,11 +132,14 @@ None.
   holds the server-generated `M_datadimensiondisabler` authority — without it
   the shell answers "Unable to find an app for this URL" (observed on 2.43.1).
 - **L5. `reset()` is a no-op while a call is in flight** —
+  **Fixed in 63b629c.** See `docs/review-2026-09-21/FIXES.md`.
   `src/hooks/useEngineMutation.ts:46-50` only clears state when
   `pendingCalls.current === 0`, so reopening the dialog for a different row
   during a slow request still shows the previous row's error. Narrow window;
   fix by clearing `error` unconditionally and only leaving `loading` alone.
-- **L6. Dead parameter kept "for symmetry"** — `src/sql/buildQuery.ts:63-70`:
+- **L6. Dead parameter kept "for symmetry"** —
+  **Fixed in 63b629c.** See `docs/review-2026-09-21/FIXES.md`.
+  `src/sql/buildQuery.ts:63-70`:
   `favoriteSourcesFor(type, minor)` never uses `minor` and needs an
   `eslint-disable`. The schema check established that the missing
   data-element-group-set join tables are version-independent, so drop the
