@@ -53,6 +53,16 @@ describe('sortRows', () => {
             'b',
         ])
     })
+    it('sorts favorites and publicFavorites numerically', () => {
+        expect(sortRows(rows, 'favorites', 'desc').map((r) => r.uid)).toEqual([
+            'a',
+            'b',
+            'c',
+        ])
+        expect(
+            sortRows(rows, 'publicFavorites', 'desc').map((r) => r.uid)
+        ).toEqual(['b', 'a', 'c'])
+    })
     it('sorts names case-insensitively', () => {
         expect(sortRows(rows, 'name', 'asc').map((r) => r.name)).toEqual([
             'age',

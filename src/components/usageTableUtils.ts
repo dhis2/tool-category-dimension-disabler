@@ -1,8 +1,8 @@
 import { DIMENSION_TYPE_KEYS, DimensionTypeKey } from '../dimensionTypes'
 import { UsageRow } from '../hooks/useUsageData'
+import type { ColumnKey } from './columns'
 
-export type SortColumn =
-    'type' | 'name' | 'uid' | 'views' | 'percent' | 'percentOfViews'
+export type SortColumn = ColumnKey
 export type SortDirection = 'asc' | 'desc'
 export type TypeFilterValue = 'ALL' | DimensionTypeKey
 
