@@ -12,14 +12,14 @@ describe('sqlView', () => {
         expect(SQL_VIEW_ID).toBe('GOLswS44mh8')
     })
 
-    it('builds a complete QUERY view definition with public read sharing', () => {
+    it('builds a complete QUERY view definition with public metadata+data read sharing', () => {
         const definition = buildSqlViewDefinition(43)
         expect(definition).toMatchObject({
             id: SQL_VIEW_ID,
             name: SQL_VIEW_NAME,
             type: 'QUERY',
             cacheStrategy: 'NO_CACHE',
-            sharing: { public: 'r-------' },
+            sharing: { public: 'r-r-----' },
         })
         expect(definition.sqlQuery).toBe(buildQuery(43))
         expect(definition.description).toContain('Data Dimension Disabler')

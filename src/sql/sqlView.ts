@@ -21,7 +21,8 @@ export const buildSqlViewDefinition = (minor: number): SqlViewDefinition => ({
         'Installed by the Data Dimension Disabler app. Ranks categories and group sets that are enabled as data dimensions by favorite views in the last 12 months. Safe to delete; the app recreates it on demand.',
     type: 'QUERY',
     cacheStrategy: 'NO_CACHE',
-    sharing: { public: 'r-------' },
+    // Metadata read + data read: /sqlViews/{uid}/data checks data-read access.
+    sharing: { public: 'r-r-----' },
     sqlQuery: buildQuery(minor),
 })
 
