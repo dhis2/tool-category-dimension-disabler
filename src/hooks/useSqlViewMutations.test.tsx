@@ -95,4 +95,39 @@ describe('useSqlViewMutations', () => {
         expect(result.current.state.error?.message).toContain('403')
         expect(result.current.state.loading).toBe(false)
     })
+
+    it('keeps loading true while an overlapping call is still in flight', async () => {
+        let resolveCreate: (value: { status: string }) => void = () => undefined
+        const deferredCreate = new Promise<{ status: string }>((resolve) => {
+            resolveCreate = resolve
+        })
+        const sqlViews = jest.fn((type: string) => {
+            if (type === 'create') {
+                return deferredCreate
+            }
+            return { status: 'OK' }
+        })
+        const { result } = renderHook(() => useSqlViewMutations(43), {
+            wrapper: wrapperWith(sqlViews),
+        })
+
+        let createOk: boolean | undefined
+        act(() => {
+            result.current.create().then((value) => {
+                createOk = value
+            })
+        })
+
+        await act(async () => {
+            await result.current.remove()
+        })
+        expect(result.current.state.loading).toBe(true)
+
+        await act(async () => {
+            resolveCreate({ status: 'OK' })
+            await deferredCreate
+        })
+        expect(result.current.state.loading).toBe(false)
+        expect(createOk).toBe(true)
+    })
 })
