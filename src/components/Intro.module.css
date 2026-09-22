@@ -1,0 +1,16 @@
+.intro {
+    max-width: 900px;
+    margin-block-end: var(--spacers-dp16);
+    color: var(--colors-grey800);
+    line-height: 1.5;
+}
+
+.intro summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--colors-grey900);
+}
+
+.intro p {
+    margin: var(--spacers-dp8) 0;
+}
