@@ -7,3 +7,4 @@ node_modules
 .vscode
 bin
 d2auth.json
+.superpowers

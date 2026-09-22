@@ -356,6 +356,9 @@ build
 .tmp
 .vscode
 .DS_Store
+
+# Agent scratch
+.superpowers
 ```
 
 - [ ] **Step 4: Write the test utilities**
