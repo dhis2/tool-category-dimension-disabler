@@ -14,6 +14,7 @@ import { ColumnChooser } from './ColumnChooser'
 import { ColumnHeaderLabel } from './ColumnHeaderLabel'
 import {
     COLUMN_DEFS,
+    ColumnDef,
     ColumnKey,
     loadVisibleColumns,
     saveVisibleColumns,
@@ -38,6 +39,17 @@ type HeaderSortDirection = 'asc' | 'desc' | 'default'
 
 // Numeric columns start descending (most-viewed first, this tool's
 // purpose); text columns start ascending.
+const opposite = (direction: SortDirection): SortDirection =>
+    direction === 'asc' ? 'desc' : 'asc'
+
+/** UIDs read as identifiers, figures line up: neither is a column-def concern. */
+const cellClass = (column: ColumnDef): string | undefined => {
+    if (column.key === 'uid') {
+        return classes.uid
+    }
+    return column.numeric ? classes.number : undefined
+}
+
 const defaultDirectionFor = (column: SortColumn): SortDirection =>
     COLUMN_DEFS.find((c) => c.key === column)?.numeric ? 'desc' : 'asc'
 
@@ -76,9 +88,7 @@ export const UsageTable = ({ rows, onDisable }: Props) => {
             column,
             direction:
                 current.column === column
-                    ? current.direction === 'asc'
-                        ? 'desc'
-                        : 'asc'
+                    ? opposite(current.direction)
                     : defaultDirectionFor(column),
         }))
 
@@ -156,13 +166,7 @@ export const UsageTable = ({ rows, onDisable }: Props) => {
                                             : `usage-cell-${column.key}`
                                     }
                                     align={column.align}
-                                    className={
-                                        column.key === 'uid'
-                                            ? classes.uid
-                                            : column.numeric
-                                              ? classes.number
-                                              : undefined
-                                    }
+                                    className={cellClass(column)}
                                 >
                                     {column.format(row)}
                                 </DataTableCell>

@@ -17,10 +17,12 @@ set -euo pipefail
 BASE="${1:?base url}"; AUTH="${2:-admin:district}"
 
 record() { # eventType uid count
-    for _ in $(seq 1 "$3"); do
-        curl -s -o /dev/null -u "$AUTH" -X POST "$BASE/api/dataStatistics?eventType=$1&favorite=$2"
+    local event_type="$1" favorite="$2" views="$3"
+    for _ in $(seq 1 "$views"); do
+        curl -s -o /dev/null -u "$AUTH" -X POST \
+            "$BASE/api/dataStatistics?eventType=$event_type&favorite=$favorite"
     done
-    echo "$1 $2 x$3"
+    echo "$event_type $favorite x$views"
 }
 
 # GETs $1 (a path+query starting with /api/...). Prints the body on 2xx.

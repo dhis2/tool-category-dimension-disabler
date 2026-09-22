@@ -194,7 +194,7 @@ def sharing_class(sharing):
     private - neither; `None`, a missing key and `{}` all mean "not shared"
     """
     sharing = sharing or {}
-    if str(sharing.get("public") or "")[:1] == "r":
+    if str(sharing.get("public") or "").startswith("r"):
         return PUBLIC
     for key in ("users", "userGroups"):
         value = sharing.get(key)
@@ -238,7 +238,7 @@ def favorite_counts(client, type_key, uid, minor, sharing_client=None):
     docstring); it defaults to the acting client.
     """
     by_kind = favorite_uids(client, type_key, uid, minor)
-    counts = {name: 0 for name in SHARING_CLASSES}
+    counts = dict.fromkeys(SHARING_CLASSES, 0)
     for kind, uids in by_kind.items():
         for name in _classify_kind(sharing_client or client, kind, uids):
             counts[name] += 1
