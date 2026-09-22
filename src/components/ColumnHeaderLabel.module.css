@@ -1,0 +1,11 @@
+.label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacers-dp4);
+}
+
+.icon {
+    display: inline-flex;
+    color: var(--colors-grey600);
+    cursor: help;
+}
