@@ -98,4 +98,35 @@ describe('UsageTable', () => {
             screen.getByText('No enabled data dimensions found')
         ).toBeInTheDocument()
     })
+
+    it('shows the enabled-dimension count, pluralized correctly', async () => {
+        const user = userEvent.setup()
+        renderWithProvider(<UsageTable rows={rows} onDisable={jest.fn()} />)
+        expect(screen.getByTestId('usage-count').textContent).toBe(
+            '3 enabled dimensions'
+        )
+
+        await user.click(
+            within(screen.getByTestId('type-filter')).getByTestId(
+                'dhis2-uicore-select-input'
+            )
+        )
+        await user.click(
+            screen.getByText('Category', {
+                selector: '[data-test*="option"] *, [data-test*="option"]',
+            })
+        )
+        expect(screen.getByTestId('usage-count').textContent).toBe(
+            '2 enabled dimensions'
+        )
+    })
+
+    it('uses the singular form for a single enabled dimension', () => {
+        renderWithProvider(
+            <UsageTable rows={[rows[0]]} onDisable={jest.fn()} />
+        )
+        expect(screen.getByTestId('usage-count').textContent).toBe(
+            '1 enabled dimension'
+        )
+    })
 })

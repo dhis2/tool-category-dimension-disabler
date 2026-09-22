@@ -85,15 +85,19 @@ export const UsageTable = ({ rows, onDisable }: Props) => {
                     : 'asc',
         }))
 
+    const countLabel =
+        visibleRows.length === 1
+            ? i18n.t('1 enabled dimension')
+            : i18n.t('{{count}} enabled dimensions', {
+                  count: visibleRows.length,
+              })
+
     return (
         <div>
             <div className={classes.toolbar}>
                 <TypeFilter value={filter} onChange={setFilter} />
-                <span className={classes.count}>
-                    {i18n.t('{{count}} enabled dimension', {
-                        count: visibleRows.length,
-                        defaultValue_plural: '{{count}} enabled dimensions',
-                    } as Record<string, unknown>)}
+                <span className={classes.count} data-test="usage-count">
+                    {countLabel}
                 </span>
             </div>
             <DataTable dataTest="usage-table">
