@@ -1,5 +1,12 @@
 # Data Dimension Disabler
 
+> ![Maturity: Validated](https://img.shields.io/badge/maturity-Validated-yellow)  
+> Intended use: review use of data dimensions in favourites and analytics, to quickly disable those that are not used.  
+> Maintainers: HISP Centre implementation team.
+>
+> **WARNING**  
+> This tool is intended to be used by system administrators, not end users. It is available as a DHIS2 app, but has not been through the same rigorous testing as normal core apps. It should be used with care, and always tested in a development environment.
+
 ## License
 
 © Copyright 2024 University of Oslo, BSD-3-Clause. See [LICENSE](LICENSE).
