@@ -183,7 +183,7 @@ describe('UsageTable', () => {
     it('adds a column from the chooser and remembers it', async () => {
         const user = userEvent.setup()
         renderWithProvider(<UsageTable rows={rows} onDisable={jest.fn()} />)
-        await user.click(screen.getByRole('button', { name: /Columns/ }))
+        await user.click(screen.getByRole('button', { name: /Manage view/ }))
         await user.click(
             screen.getByRole('menuitemcheckbox', { name: /Private/ })
         )
@@ -212,7 +212,7 @@ describe('UsageTable', () => {
         expect(
             within(genderRow).getByTestId('usage-cell-favorites')
         ).toHaveTextContent(String(rows[0].favorites))
-        await user.click(screen.getByRole('button', { name: /Columns/ }))
+        await user.click(screen.getByRole('button', { name: /Manage view/ }))
         await user.click(
             screen.getByRole('menuitemcheckbox', { name: /Public/ })
         )

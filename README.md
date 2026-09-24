@@ -92,9 +92,9 @@ data read; the `/sqlViews/{uid}/data` endpoint that returns the ranked rows
 requires data read specifically). It can be removed again from within the
 app at any time — the app offers to recreate it the next time it is opened.
 
-### Columns
+### Manage view
 
-The **Columns** button above the table shows or hides any column except Type
+The **Manage view** button above the table shows or hides any column except Type
 and Name, which are always shown. The table starts with Type, Name, UID,
 Favorites, Views and "% of dimension views"; Public, Shared, Private and
 "% of favorite views" start hidden. The choice is remembered in the browser's

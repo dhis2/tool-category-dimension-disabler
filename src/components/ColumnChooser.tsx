@@ -81,7 +81,7 @@ export const ColumnChooser = ({ visible, onChange }: Props) => {
                 </FlyoutMenu>
             }
         >
-            {i18n.t('Columns')}
+            {i18n.t('Manage view')}
         </DropdownButton>
     )
 }
