@@ -7,7 +7,7 @@ export const Intro = () => (
         <summary>{i18n.t('About this tool')}</summary>
         <p>
             {i18n.t(
-                'Every category and group set enabled as a data dimension adds a column to the analytics tables. This table ranks the enabled dimensions by how many favorites use them and how often those favorites were opened in the last 12 months, so rarely used dimensions can be disabled. Hover the column headers for definitions.'
+                'Every metadata type enabled as a data dimension adds a column to the analytics tables. This tool ranks them by how many favorites use them and how often those favorites were opened in the last 12 months, so rarely used dimensions can be disabled. Hover the info icon in the column headers for definitions.'
             )}
         </p>
         <p>
