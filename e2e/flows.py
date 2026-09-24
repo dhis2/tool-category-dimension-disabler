@@ -63,8 +63,9 @@ COLUMN_COUNT = 10
 CHOOSER_COLUMN = "privateFavorites"
 CHOOSER_COLUMN_LABEL = "Private"
 CROSSCHECK_ROW_LIMIT = 3
-# A right-aligned header may end no further from its column's right edge
-# than the cell's own inline padding (12px), plus a px for rounding.
+# A right-aligned header's content may end no further from its column's
+# right edge than the cell's own inline padding (12px), plus a px for
+# rounding.
 MAX_HEADER_OFFSET_PX = 13
 
 LIMITED_ROLE_NAME = "cdd-e2e-app-only"
@@ -365,16 +366,28 @@ def _design_tokens_step(frame):
 
 
 def _header_alignment_step(frame):
-    offsets = ui.numeric_header_offsets(frame)
+    layout = ui.header_layout(frame)
+    numeric = {key: col for key, col in layout.items() if col["numeric"]}
     strayed = {
-        key: offset
-        for key, offset in offsets.items()
-        if offset > MAX_HEADER_OFFSET_PX
+        key: col["offset"]
+        for key, col in numeric.items()
+        if col["offset"] > MAX_HEADER_OFFSET_PX
     }
     return (
         "Numeric column headers sit above their numbers",
-        PASS if offsets and not strayed else FAIL,
-        f"px from the right edge: {offsets}",
+        PASS if numeric and not strayed else FAIL,
+        f"px from the right edge: { {k: c['offset'] for k, c in numeric.items()} }",
+    )
+
+
+def _sort_icon_step(frame):
+    """The sort icon must not swap sides between columns (review, 2026-09-24)."""
+    layout = ui.header_layout(frame)
+    swapped = [key for key, col in layout.items() if not col["icon_after_label"]]
+    return (
+        "Every sort icon sits after its column label",
+        PASS if layout and not swapped else FAIL,
+        f"{len(layout)} headers checked, icon before the label in: {swapped}",
     )
 
 
@@ -397,6 +410,7 @@ def flow_layout(ctx):
     results = [
         _design_tokens_step(frame),
         _header_alignment_step(frame),
+        _sort_icon_step(frame),
         _chooser_checkbox_step(frame),
     ]
     _shot(ctx, "13-layout")

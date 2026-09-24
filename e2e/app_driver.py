@@ -201,7 +201,7 @@ def table_rows(frame):
 
 
 def open_column_chooser(frame):
-    """Open the "Columns" dropdown and return its menu."""
+    """Open the "Manage view" dropdown and return its menu."""
     frame.locator(COLUMN_CHOOSER).get_by_role("button").first.click()
     menu = frame.locator(COLUMN_CHOOSER_MENU).first
     menu.wait_for(state="visible", timeout=DEFAULT_TIMEOUT_MS)
@@ -209,7 +209,7 @@ def open_column_chooser(frame):
 
 
 def close_column_chooser(frame):
-    """Close the "Columns" dropdown by clicking away from it.
+    """Close the "Manage view" dropdown by clicking away from it.
 
     Ticking an item deliberately leaves the menu open, and the flyout's
     backdrop then covers the toggle button, so the way out is the same as
@@ -261,39 +261,54 @@ def design_tokens(frame):
     )
 
 
-def numeric_header_offsets(frame):
-    """Px from each right-aligned column's header label to its cells' right edge.
+def header_layout(frame):
+    """Where each sortable column header's label and sort icon sit.
 
-    A right-aligned column whose header sits on the left reads as belonging to
-    the column beside it, so this should stay within the cell's own padding.
+    Per column: `offset` is the px from the right edge of the header's content
+    (its last element, the sort icon) to the right edge of its cells, and
+    `icon_after_label` says whether the sort icon follows the label rather
+    than preceding it. A right-aligned column whose header sits on the left
+    reads as belonging to the column beside it; a sort icon that swaps sides
+    between columns reads as an inconsistency.
     """
     return frame.evaluate(
-        """({ headerPrefix, labelSelector }) => {
-            const offsets = {}
+        """({ headerPrefix, labelSelector, sortSelector }) => {
+            const layout = {}
             for (const header of document.querySelectorAll(
                 `[data-test^="${headerPrefix}"]`
             )) {
                 const key = header
                     .getAttribute('data-test')
                     .slice(headerPrefix.length)
+                // The name column's cell keeps its own older data-test.
                 const cell = document.querySelector(
-                    `[data-test="usage-cell-${key}"]`
+                    key === 'name'
+                        ? '[data-test="usage-row-name"]'
+                        : `[data-test="usage-cell-${key}"]`
                 )
                 const label = header.querySelector(labelSelector)
-                if (!cell || !label) {
+                const sorter = header.querySelector(sortSelector)
+                if (!cell || !label || !sorter) {
                     continue
                 }
-                if (getComputedStyle(cell).textAlign !== 'right') {
-                    continue
+                layout[key] = {
+                    numeric: getComputedStyle(cell).textAlign === 'right',
+                    offset: Math.round(
+                        cell.getBoundingClientRect().right -
+                            sorter.getBoundingClientRect().right
+                    ),
+                    icon_after_label:
+                        sorter.getBoundingClientRect().left >=
+                        label.getBoundingClientRect().right,
                 }
-                offsets[key] = Math.round(
-                    cell.getBoundingClientRect().right -
-                        label.getBoundingClientRect().right
-                )
             }
-            return offsets
+            return layout
         }""",
-        {"headerPrefix": USAGE_HEADER_PREFIX, "labelSelector": HEADER_LABEL},
+        {
+            "headerPrefix": USAGE_HEADER_PREFIX,
+            "labelSelector": HEADER_LABEL,
+            "sortSelector": SORT_BUTTON,
+        },
     )
 
 

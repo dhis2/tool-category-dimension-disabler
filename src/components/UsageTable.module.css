@@ -36,9 +36,10 @@
  * own justify-content rule targets a `.label` element the component never
  * renders, so the label and sort icon stay packed to the left of a right-
  * aligned numeric column, 89px from the numbers below them (measured on
- * 2.43.1). Reversing the header's flex row puts the label's right edge exactly
- * above the numbers, with the sort icon beside it.
+ * 2.43.1). Pushing the header's flex row to the end lines the label up with
+ * the numbers it names, while keeping the sort icon after the label the way
+ * every other column has it.
  */
 .numericHeader :global(span.top) {
-    flex-direction: row-reverse;
+    justify-content: flex-end;
 }

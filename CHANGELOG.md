@@ -34,7 +34,7 @@ All notable changes to this project will be documented in this file.
 - Favorite counts per dimension: how many visualizations, maps and event
   visualizations use it, split into public, shared and private by each
   favorite's sharing.
-- A **Columns** chooser above the table. Type and Name are always shown; the
+- A **Manage view** chooser above the table. Type and Name are always shown; the
   choice is remembered per browser in `localStorage`
   (`data-dimension-disabler.columns`).
 - An ⓘ tooltip in every numeric column header explaining what it counts.
@@ -46,10 +46,11 @@ All notable changes to this project will be documented in this file.
   provide the DHIS2 design tokens, so every `var(--spacers-*)` and
   `var(--colors-*)` declaration in the app's own stylesheets was dropped and
   the page rendered with no padding, margins or spacing at all.
-- The **Columns** chooser draws a checkbox per entry. `MenuItem`'s `checkbox`
+- The **Manage view** chooser draws a checkbox per entry. `MenuItem`'s `checkbox`
   prop only sets `role` and `aria-checked`, so the current selection was
   invisible behind the open dropdown.
-- Numeric column headers are right-aligned above their numbers.
+- Numeric column headers are right-aligned above their numbers, with the sort
+  icon after the label as in every other column.
   `DataTableColumnHeader` applies its `align` prop as `text-align` only, which
   cannot move the label inside its flex row, so the header sat 89px to the
   left of the figures it named.
