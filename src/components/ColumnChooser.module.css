@@ -1,0 +1,32 @@
+/*
+ * `MenuItem`'s `checkbox` prop only sets `role` and `aria-checked`; it draws
+ * nothing, so the selection is invisible behind the open dropdown. This is the
+ * box drawn in the item's icon slot, which is 16px square in a dense menu.
+ */
+.checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 16px;
+    block-size: 16px;
+    border: 1px solid var(--colors-grey500);
+    border-radius: 2px;
+    background-color: var(--colors-white);
+    color: var(--colors-white);
+}
+
+.checked {
+    border-color: var(--colors-blue600);
+    background-color: var(--colors-blue600);
+}
+
+/* Type and Name cannot be hidden: checked, but not something to click at. */
+.locked {
+    border-color: var(--colors-grey400);
+    background-color: var(--colors-grey400);
+}
+
+.checkbox svg {
+    inline-size: 14px;
+    block-size: 14px;
+}

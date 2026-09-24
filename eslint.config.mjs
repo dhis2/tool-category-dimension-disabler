@@ -1,36 +1,13 @@
-import globals from "globals";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import js from "@eslint/js";
-import { FlatCompat } from "@eslint/eslintrc";
+import config from '@dhis2/config-eslint'
+import { defineConfig } from 'eslint/config'
+import { includeIgnoreFile } from '@eslint/compat'
+import { fileURLToPath } from 'node:url'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-    baseDirectory: __dirname,
-    recommendedConfig: js.configs.recommended,
-    allConfig: js.configs.all
-});
+const gitignorePath = fileURLToPath(new URL('.gitignore', import.meta.url))
 
-export default [...compat.extends("eslint:recommended"), {
-    languageOptions: {
-        globals: {
-            ...globals.browser,
-            require: true,
-            __dirname: true,
-            process: true,
-            module: true,
-            DHIS_CONFIG: true,
-        },
-
-        ecmaVersion: 9,
-        sourceType: "module",
+export default defineConfig([
+    includeIgnoreFile(gitignorePath, 'Imported .gitignore patterns'),
+    {
+        extends: [config],
     },
-
-    rules: {
-        indent: ["error", 4],
-        quotes: ["error", "double"],
-        semi: ["error", "always"],
-        "no-console": "off",
-    },
-}];
+])

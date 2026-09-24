@@ -1,0 +1,13 @@
+.container {
+    max-width: none;
+    margin: 0 auto;
+    padding: var(--spacers-dp16);
+    font-size: 14px;
+    color: var(--colors-grey900);
+}
+
+.loader {
+    display: flex;
+    justify-content: center;
+    padding: var(--spacers-dp32);
+}

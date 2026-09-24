@@ -1,0 +1,258 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: i18next-conv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"POT-Creation-Date: 2026-09-24T11:37:57.839Z\n"
+"PO-Revision-Date: 2026-09-24T11:37:57.839Z\n"
+
+msgid "Manage view"
+msgstr "Manage view"
+
+msgid "Unknown error"
+msgstr "Unknown error"
+
+msgid "The request failed"
+msgstr "The request failed"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Disable data dimension"
+msgstr "Disable data dimension"
+
+msgid "Disable the {{type}} \"{{name}}\" as a data dimension?"
+msgstr "Disable the {{type}} \"{{name}}\" as a data dimension?"
+
+msgid ""
+"Favorites that use this dimension will stop working until it is re-enabled "
+"in the Maintenance app. Analytics tables shrink at the next analytics run."
+msgstr ""
+"Favorites that use this dimension will stop working until it is re-enabled "
+"in the Maintenance app. Analytics tables shrink at the next analytics run."
+
+msgid "Disable"
+msgstr "Disable"
+
+msgid "About this tool"
+msgstr "About this tool"
+
+msgid ""
+"Every metadata type enabled as a data dimension adds a column to the "
+"analytics tables. This tool ranks them by how many favorites use them and "
+"how often those favorites were opened in the last 12 months, so rarely used "
+"dimensions can be disabled. Hover the info icon in the column headers for "
+"definitions."
+msgstr ""
+"Every metadata type enabled as a data dimension adds a column to the "
+"analytics tables. This tool ranks them by how many favorites use them and "
+"how often those favorites were opened in the last 12 months, so rarely used "
+"dimensions can be disabled. Hover the info icon in the column headers for "
+"definitions."
+
+msgid ""
+"Favorites that use a disabled dimension stop working and section forms lose "
+"their subtotals, so check before disabling. A dimension can be re-enabled "
+"at any time in the Maintenance app."
+msgstr ""
+"Favorites that use a disabled dimension stop working and section forms lose "
+"their subtotals, so check before disabling. A dimension can be re-enabled "
+"at any time in the Maintenance app."
+
+msgid "Remove the SQL view"
+msgstr "Remove the SQL view"
+
+msgid ""
+"This deletes the SQL view \"{{name}}\" that the app installed. The app will "
+"offer to recreate it the next time it is opened."
+msgstr ""
+"This deletes the SQL view \"{{name}}\" that the app installed. The app will "
+"offer to recreate it the next time it is opened."
+
+msgid "Remove SQL view"
+msgstr "Remove SQL view"
+
+msgid ""
+"Your user needs the \"Add/Update SQL view\" authority (or the Superuser "
+"role) to install the view."
+msgstr ""
+"Your user needs the \"Add/Update SQL view\" authority (or the Superuser "
+"role) to install the view."
+
+msgid "Could not check the SQL view"
+msgstr "Could not check the SQL view"
+
+msgid "Retry"
+msgstr "Retry"
+
+msgid "SQL view not installed"
+msgstr "SQL view not installed"
+
+msgid ""
+"The tool needs an SQL view named \"{{name}}\" to count how often favorites "
+"use each dimension. Creating it requires the \"Add/Update SQL view\" "
+"authority. The view is public read-only and can be removed from this app at "
+"any time."
+msgstr ""
+"The tool needs an SQL view named \"{{name}}\" to count how often favorites "
+"use each dimension. Creating it requires the \"Add/Update SQL view\" "
+"authority. The view is public read-only and can be removed from this app at "
+"any time."
+
+msgid "Create SQL view"
+msgstr "Create SQL view"
+
+msgid "SQL view needs an update"
+msgstr "SQL view needs an update"
+
+msgid ""
+"An older version of the SQL view is installed (for example from the "
+"Category dimension disabler, or for a different DHIS2 version). Update it "
+"to include group sets and the current server version."
+msgstr ""
+"An older version of the SQL view is installed (for example from the "
+"Category dimension disabler, or for a different DHIS2 version). Update it "
+"to include group sets and the current server version."
+
+msgid "Update SQL view"
+msgstr "Update SQL view"
+
+msgid "Dimension type"
+msgstr "Dimension type"
+
+msgid "All types"
+msgstr "All types"
+
+msgid "1 enabled dimension"
+msgstr "1 enabled dimension"
+
+msgid "{{n}} enabled dimensions"
+msgstr "{{n}} enabled dimensions"
+
+msgid "Sort by {{column}}"
+msgstr "Sort by {{column}}"
+
+msgid "Action"
+msgstr "Action"
+
+msgid "No enabled data dimensions found"
+msgstr "No enabled data dimensions found"
+
+msgid "\"{{name}}\" is no longer a data dimension"
+msgstr "\"{{name}}\" is no longer a data dimension"
+
+msgid "Could not load dimension usage"
+msgstr "Could not load dimension usage"
+
+msgid ""
+"If the view exists but fails on this server version, remove it below and "
+"let the app recreate it."
+msgstr ""
+"If the view exists but fails on this server version, remove it below and "
+"let the app recreate it."
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "UID"
+msgstr "UID"
+
+msgid "Favorites"
+msgstr "Favorites"
+
+msgid ""
+"Number of visualizations, maps and event visualizations that use this "
+"dimension, regardless of how often they are viewed."
+msgstr ""
+"Number of visualizations, maps and event visualizations that use this "
+"dimension, regardless of how often they are viewed."
+
+msgid "Public"
+msgstr "Public"
+
+msgid ""
+"Favorites using this dimension whose public sharing grants at least "
+"metadata read."
+msgstr ""
+"Favorites using this dimension whose public sharing grants at least "
+"metadata read."
+
+msgid "Shared"
+msgstr "Shared"
+
+msgid ""
+"Favorites using this dimension that are not public but are shared with at "
+"least one user or user group."
+msgstr ""
+"Favorites using this dimension that are not public but are shared with at "
+"least one user or user group."
+
+msgid "Private"
+msgstr "Private"
+
+msgid ""
+"Favorites using this dimension that are neither public nor shared with "
+"anyone; only their owner can open them."
+msgstr ""
+"Favorites using this dimension that are neither public nor shared with "
+"anyone; only their owner can open them."
+
+msgid "Views"
+msgstr "Views"
+
+msgid ""
+"How many times favorites using this dimension were opened in the last 12 "
+"months."
+msgstr ""
+"How many times favorites using this dimension were opened in the last 12 "
+"months."
+
+msgid "% of dimension views"
+msgstr "% of dimension views"
+
+msgid "This dimension's share of all views counted across every enabled dimension."
+msgstr "This dimension's share of all views counted across every enabled dimension."
+
+msgid "% of favorite views"
+msgstr "% of favorite views"
+
+msgid ""
+"The same views compared with every favorite view in the last 12 months, "
+"including favorites that use no dimension at all."
+msgstr ""
+"The same views compared with every favorite view in the last 12 months, "
+"including favorites that use no dimension at all."
+
+msgid "Category"
+msgstr "Category"
+
+msgid "Organisation unit group set"
+msgstr "Organisation unit group set"
+
+msgid "Data element group set"
+msgstr "Data element group set"
+
+msgid "Category option group set"
+msgstr "Category option group set"
+
+msgid ""
+"Could not determine the DHIS2 server version, so the SQL view cannot be "
+"checked."
+msgstr ""
+"Could not determine the DHIS2 server version, so the SQL view cannot be "
+"checked."
+
+msgctxt "Application title"
+msgid "__MANIFEST_APP_TITLE"
+msgstr "Data Dimension Disabler"
+
+msgctxt "Application description"
+msgid "__MANIFEST_APP_DESCRIPTION"
+msgstr ""
+"Rank categories and group sets that are enabled as data dimensions by how "
+"often favorites using them are viewed, and disable the unused ones"
